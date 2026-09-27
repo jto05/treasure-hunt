@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+
+# Runtime state (generated, not source — see server/README.md)
+server/state.json
+server/overrides.json
+**/state.json
+**/overrides.json
+
+# Frontend (in case web/ ends up with a build step)
+web/node_modules/
+web/dist/
+
+# Arduino
+esp32-node/**/build/
+*.hex
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
