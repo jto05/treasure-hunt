@@ -1,0 +1,36 @@
+name: server-tests
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+jobs:
+  server-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r server/requirements.txt pytest
+
+      - name: Run pytest
+        working-directory: server
+        run: |
+          set +e
+          pytest
+          code=$?
+          set -e
+          # Exit code 5 = "no tests collected". server/tests/ is still
+          # empty scaffolding at this point in the project; treat that
+          # as a pass so CI isn't red before anyone's written a test.
+          # This branch stops being exercised once real tests exist.
+          if [ "$code" -eq 5 ]; then
+            echo "No tests collected yet — treating as a pass."
+            exit 0
+          fi
+          exit $code
