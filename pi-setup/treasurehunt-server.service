@@ -3,9 +3,10 @@ Description=Treasure Hunt game server
 After=network.target
 
 [Service]
-User=hunt
+User=admin
 WorkingDirectory=/opt/treasurehunt/server
-ExecStart=/opt/treasurehunt/server/.venv/bin/waitress-serve --listen=0.0.0.0:80 --call app:create_app
+Environment=PORT=80
+ExecStart=/usr/bin/make serve
 Restart=always
 RestartSec=2
 
