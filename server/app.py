@@ -8,7 +8,17 @@ def create_app():
     # every few seconds
     @app.post("/api/report")
     def report():
-        return jsonify()
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "bad_json"}), 400
+
+        # TODO: implement in-memory storage
+
+        # printing for testing
+        print("Data:", data)
+
+        return jsonify({"ok": True})
+
 
     # Register a team
     @app.post("/api/team")
