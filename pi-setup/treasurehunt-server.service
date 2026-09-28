@@ -1,0 +1,20 @@
+[Unit]
+Description=Treasure Hunt game server
+After=network.target
+
+[Service]
+User=hunt
+WorkingDirectory=/opt/treasurehunt/server
+ExecStart=/opt/treasurehunt/server/.venv/bin/waitress-serve --listen=0.0.0.0:80 --call app:create_app
+Restart=always
+RestartSec=2
+
+# Lets waitress bind to port 80 without running the whole service as root
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+
+# TODO once they exist:
+#   Environment=HUNT_STATE=/var/lib/treasurehunt/state.json WEB_DIR=/opt/treasurehunt/web
+#   StateDirectory=treasurehunt
+
+[Install]
+WantedBy=multi-user.target
