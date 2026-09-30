@@ -1,8 +1,12 @@
 from flask import Flask, jsonify, request
+from hunt.netinfo import ip_to_mac
+from hunt.store import GameStore
 
 
 def create_app():
     app = Flask(__name__)
+    # TODO: pass config.json into GameStore
+    store = GameStore()
     
     # Treasure reports the average RSSI per phone MAC address to server
     # every few seconds
@@ -32,12 +36,26 @@ def create_app():
         print("Data:", data)
 
         return jsonify({"ok": True})
+        # TODO: return list of mac addresses that should be tracked
 
 
     # Register a team
     @app.post("/api/team")
     def register_team():
-        return jsonify()
+        data = request.get_json(silent=True)
+        if not data or "name" not in data:
+            return jsonify({"error": "bad_json"}), 400
+
+        # get mac address from ip
+        mac = ip_to_mac(request.remote_addr) 
+
+        # build response 
+        token = store.register_team
+        resp = jsonify({"team": data["name"]})
+        # build cookie that lets player's session persist
+        resp.set_cookie("team", token, httponly=True, samesite="Lax",max_age=86400)
+        return resp
+
 
     # Get the state of the page right now.
     @app.get("/api/state")

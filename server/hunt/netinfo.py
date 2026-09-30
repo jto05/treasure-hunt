@@ -43,4 +43,3 @@ def _from_leases(ip, path):
             return fields[1].lower() # fields[1] is the MAC address
 
     return None
-
