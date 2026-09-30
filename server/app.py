@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request
 from hunt.netinfo import ip_to_mac
-from hunt.store import GameStore
+from hunt.state import GameStore
 
 
 def create_app():
