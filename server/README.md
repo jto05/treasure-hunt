@@ -79,6 +79,11 @@ in the top-level README, map domain errors to the listed error codes.
   change. Signal readings themselves are not persisted — only team/game
   progress — since they're live sensor data, not something a restart
   needs to remember.
+- `known_macs()`: every registered team's phone MAC (set via
+  `register_team`, looked up through `hunt.netinfo.ip_to_mac` at
+  `POST /api/team` time). Echoed back as `watch_macs` in every
+  `POST /api/report` response, so each treasure knows which MACs are
+  actually worth reporting instead of everything it overhears.
 
 ## `hunt/proximity.py`
 
