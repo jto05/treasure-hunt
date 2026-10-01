@@ -56,7 +56,7 @@ void loop() {
     Serial.println("Reconnected");
   }
 
-  uint8_t mac[6] = {0x74, 0x38, 0x3e, 0xb0, 0x93, 0x4d};
+  uint8_t mac[6] = {0x74, 0xd8, 0x3e, 0xb0, 0x93, 0x4d};
   int r = getRssi(mac);
   Serial.printf("RSSI to device: %d dBm\n", r);
   delay(2000);
