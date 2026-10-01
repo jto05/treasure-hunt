@@ -1,12 +1,13 @@
 from flask import Flask, jsonify, request
+from hunt.config import load_config
 from hunt.netinfo import ip_to_mac
 from hunt.state import GameStore
 
 
 def create_app():
     app = Flask(__name__)
-    # TODO: pass config.json into GameStore
-    store = GameStore()
+    config = load_config()
+    store = GameStore(treasure_macs = config["treasure_macs"])
     
     # Treasure reports the average RSSI per phone MAC address to server
     # every few seconds
