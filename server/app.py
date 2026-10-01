@@ -1,10 +1,16 @@
+import logging
+
 from flask import Flask, jsonify, request
 from hunt.config import load_config
+from hunt.logging_setup import configure_logging
 from hunt.netinfo import ip_to_mac
 from hunt.state import GameStore
 
 
 def create_app():
+    configure_logging()
+    logger = logging.getLogger(__name__)
+
     app = Flask(__name__)
     config = load_config()
     store = GameStore(treasure_macs = config["treasure_macs"])
@@ -32,15 +38,16 @@ def create_app():
         # check if bad json
         bad_json = not data or "node" not in data or "readings" not in data
         if bad_json:
+            logger.warning("bad report body: %r", data)
             return jsonify({"error": "bad_json"}), 400
 
         # report readings
         store.record_report(data["node"], data["readings"])
-
+        logger.info("report node=%s macs=%d", data["node"], len(data["readings"]))
 
         # return list of know_macs
         return jsonify({
-            "ok": True, 
+            "ok": True,
             "watch_macs": store.known_macs()
         })
 
@@ -49,13 +56,15 @@ def create_app():
     def register_team():
         data = request.get_json(silent=True)
         if not data or "name" not in data:
+            logger.warning("bad team registration body: %r", data)
             return jsonify({"error": "bad_json"}), 400
 
         # get mac address from ip
-        mac = ip_to_mac(request.remote_addr) 
+        mac = ip_to_mac(request.remote_addr)
 
         # build response
         token = store.register_team(data["name"], mac)
+        logger.info("team registered name=%r mac=%s", data["name"], mac)
         resp = jsonify({"team": data["name"]})
         # build cookie that lets player's session persist
         resp.set_cookie("team", token, httponly=True, samesite="Lax",max_age=86400)
