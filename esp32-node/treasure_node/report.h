@@ -6,4 +6,7 @@
 // HTTP 200.
 bool sendReport(const char* nodeId);
 
+// for logging
+int trackedCount();
+
 

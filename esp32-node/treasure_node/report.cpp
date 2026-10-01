@@ -4,12 +4,14 @@
 #include <HTTPClient.h>
 #include <WiFi.h>
 
-static const char *REPORT_URL = "http://10.42.0.1/api/report";
+static const char *REPORT_URL = "http://10.42.0.1:8080/api/report";
 static const int MAX_TRACKED = 16;
 
 // MACs server told to track from last reply
 static uint8_t tracked[MAX_TRACKED][6];
 static int trackedLen = 0;
+
+int trackedCount() { return trackedLen; }
 
 static bool parseMac(
 const char *s, uint8_t out[8]) {
