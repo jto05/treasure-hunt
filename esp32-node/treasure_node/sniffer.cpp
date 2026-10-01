@@ -71,6 +71,6 @@ int getRssi(const uint8_t mac[6]) {
     if (e.ms && memcmp(e.mac, mac, 6) == 0 && millis() - e.ms < 5000)
       result = e.rssi;
   }
-  portENTER_CRITICAL(&lock);
+  portEXIT_CRITICAL(&lock);
   return result;
 }
