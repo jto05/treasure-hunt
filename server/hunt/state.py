@@ -14,7 +14,7 @@ class GameStore():
 
         self._treasure_macs = []
         for m in treasure_macs:
-            self._treasure_macs = m.lower()
+            self._treasure_macs.append(m.lower())
 
     def register_team(self, name, mac):
         token = secrets.token_hex(16) # generates a token that acts like a key for the team
@@ -26,7 +26,7 @@ class GameStore():
 
     def record_report(self, node, readings, now=None):
         if now is None:
-            now = time.Time()
+            now = time.time()
 
         with self._lock:
             node_readings = self._readings.setdefault(node, {})
@@ -46,6 +46,11 @@ class GameStore():
 
     def known_macs(self):
         with self._lock:
-            return {t["mac"] for t in self._teams.values()}
+            macs = []
+            for team in self._teams.values():
+                if team["mac"] is None:
+                    continue
+                macs.append(team["mac"])
+            return macs
 
 
