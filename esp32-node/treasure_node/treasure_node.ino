@@ -1,4 +1,5 @@
 #include <WiFi.h>
+#include "sniffer.h"
 
 #ifndef LED_BUILTIN
 #define LED_BUILTIN 2
@@ -34,6 +35,8 @@ void setup() {
   Serial.begin(115200);
   pinMode(STATUS_LED, OUTPUT);
   connectWifi();
+  
+  snifferBegin();
 }
 
 void loop() {
@@ -53,6 +56,8 @@ void loop() {
     Serial.println("Reconnected");
   }
 
-  Serial.printf("RSSI to router: %d dBm\n", WiFi.RSSI());
+  uint8_t mac[6] = {0x74, 0x38, 0x3e, 0xb0, 0x93, 0x4d};
+  int r = getRssi(mac);
+  Serial.printf("RSSI to device: %d dBm\n", r);
   delay(2000);
 }
