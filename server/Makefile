@@ -1,8 +1,9 @@
 VENV := .venv
 PYTHON := $(VENV)/bin/python
 PIP := $(VENV)/bin/pip
+PORT ?= 8080
 
-.PHONY: install run test clean
+.PHONY: install run serve test clean
 
 $(VENV)/bin/activate: requirements.txt
 	python3 -m venv $(VENV)
@@ -14,6 +15,9 @@ install: $(VENV)/bin/activate
 
 run: install
 	$(PYTHON) app.py
+
+serve: install
+	$(VENV)/bin/waitress-serve --listen=0.0.0.0:$(PORT) --call app:create_app
 
 test: install
 	$(PYTHON) -m pytest

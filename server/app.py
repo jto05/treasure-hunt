@@ -1,19 +1,75 @@
+import logging
+
 from flask import Flask, jsonify, request
+from hunt.config import load_config
+from hunt.logging_setup import configure_logging
+from hunt.netinfo import ip_to_mac
+from hunt.state import GameStore
 
 
 def create_app():
+    configure_logging()
+    logger = logging.getLogger(__name__)
+
     app = Flask(__name__)
+    config = load_config()
+    store = GameStore(treasure_macs = config["treasure_macs"])
     
     # Treasure reports the average RSSI per phone MAC address to server
     # every few seconds
+    #
+    # Expected JSON body from the ESP32:
+    # {
+    #   "node": "B",                # which treasure: "A", "B" or "C"
+    #   "uptime_ms": 523000,        # optional, ESP32's own uptime
+    #   "readings": {
+    #     "a4:5e:60:12:34:56": {"rssi": -58, "n": 14, "age_ms": 200},
+    #     "3c:22:fb:ab:cd:ef": {"rssi": -71, "n": 3,  "age_ms": 1800}
+    #   }
+    # }
+    # readings is keyed by phone MAC address (lowercase); rssi is the
+    # ESP32's averaged dBm, n is packets heard in the last second, and
+    # age_ms is how long ago that MAC was last heard. Only MACs heard in
+    # the last 5s should be included.
     @app.post("/api/report")
     def report():
-        return jsonify()
+        data = request.get_json()
+
+        # check if bad json
+        bad_json = not data or "node" not in data or "readings" not in data
+        if bad_json:
+            logger.warning("bad report body: %r", data)
+            return jsonify({"error": "bad_json"}), 400
+
+        # report readings
+        store.record_report(data["node"], data["readings"])
+        logger.info("report node=%s macs=%d", data["node"], len(data["readings"]))
+
+        # return list of know_macs
+        return jsonify({
+            "ok": True,
+            "watch_macs": store.known_macs()
+        })
 
     # Register a team
     @app.post("/api/team")
     def register_team():
-        return jsonify()
+        data = request.get_json(silent=True)
+        if not data or "name" not in data:
+            logger.warning("bad team registration body: %r", data)
+            return jsonify({"error": "bad_json"}), 400
+
+        # get mac address from ip
+        mac = ip_to_mac(request.remote_addr)
+
+        # build response
+        token = store.register_team(data["name"], mac)
+        logger.info("team registered name=%r mac=%s", data["name"], mac)
+        resp = jsonify({"team": data["name"]})
+        # build cookie that lets player's session persist
+        resp.set_cookie("team", token, httponly=True, samesite="Lax",max_age=86400)
+        return resp
+
 
     # Get the state of the page right now.
     @app.get("/api/state")
