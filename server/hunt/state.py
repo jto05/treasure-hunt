@@ -1,6 +1,10 @@
+import logging
 import secrets
 import time
 import threading
+
+logger = logging.getLogger(__name__)
+
 
 class GameStore():
     def __init__(self, treasure_macs):
@@ -33,6 +37,7 @@ class GameStore():
             for mac, data in readings.items():
                 mac = mac.lower()
                 if mac in self._treasure_macs:
+                    logger.debug("ignoring treasure mac %s on node %s", mac, node)
                     continue
                 node_readings[mac] = {
                     "rssi": data["rssi"],
