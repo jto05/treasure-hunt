@@ -42,7 +42,8 @@ bool sendReport(const char *nodeId) {
                tracked[i][1], tracked[i][2], tracked[i][3], tracked[i][4],
                tracked[i][5]);
       readings[key]["rssi"] = rssi;
-  }  
+      Serial.printf("  %s rssi=%d\n", key, rssi);
+  }
 
   String body;
   serializeJson(req, body);
