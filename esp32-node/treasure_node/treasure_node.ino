@@ -1,6 +1,6 @@
 #include <WiFi.h>
 #include "sniffer.h"
-#include "report.h":
+#include "report.h"
 
 #ifndef LED_BUILTIN
 #define LED_BUILTIN 2
@@ -62,7 +62,7 @@ void loop() {
   static uint32_t last = 0;
   if (millis() - last >= 1000) {
     last = millis();
-    bool ok = sendReport("A");
+    bool ok = sendReport(NODE);
     Serial.printf("sent=%s tracking=%d\n", ok ? "ok" : "FAILED", trackedCount());
   }
 
