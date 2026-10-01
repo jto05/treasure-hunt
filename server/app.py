@@ -54,8 +54,8 @@ def create_app():
         # get mac address from ip
         mac = ip_to_mac(request.remote_addr) 
 
-        # build response 
-        token = store.register_team
+        # build response
+        token = store.register_team(data["name"], mac)
         resp = jsonify({"team": data["name"]})
         # build cookie that lets player's session persist
         resp.set_cookie("team", token, httponly=True, samesite="Lax",max_age=86400)
