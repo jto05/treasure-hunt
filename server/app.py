@@ -27,17 +27,21 @@ def create_app():
     @app.post("/api/report")
     def report():
         data = request.get_json()
-        if not data:
+
+        # check if bad json
+        bad_json = not data or "node" not in data or "readings" not in data
+        if bad_json:
             return jsonify({"error": "bad_json"}), 400
 
-        # TODO: implement in-memory storage
+        # report readings
+        store.record_report(data["node"], data["readings"])
 
-        # printing for testing
-        print("Data:", data)
 
-        return jsonify({"ok": True})
-        # TODO: return list of mac addresses that should be tracked
-
+        # return list of know_macs
+        return jsonify({
+            "ok": True, 
+            "watch_macs": store.known_macs()
+        })
 
     # Register a team
     @app.post("/api/team")
