@@ -1,5 +1,6 @@
 #include <WiFi.h>
 #include "sniffer.h"
+#include "report.h":
 
 #ifndef LED_BUILTIN
 #define LED_BUILTIN 2
@@ -8,6 +9,7 @@
 
 const char* WIFI_SSID = "TreasureHunt";
 const int STATUS_LED = 2;
+const char* NODE = "A"; // change to specific node before flashing
 
 void connectWifi() {
   Serial.printf("Connecting to %s", WIFI_SSID);
@@ -56,8 +58,12 @@ void loop() {
     Serial.println("Reconnected");
   }
 
-  uint8_t mac[6] = {0x74, 0xd8, 0x3e, 0xb0, 0x93, 0x4d};
-  int r = getRssi(mac);
-  Serial.printf("RSSI to device: %d dBm\n", r);
-  delay(2000);
+  // report
+  static uint32_t last = 0;
+  if (millis() - last >= 1000) {
+    last = millis();
+    bool ok = sendReport("A");
+    Serial.printf("sent=%s tracking=%d\n", ok ? "ok" : "FAILED", trackedCount());
+  }
+
 }
