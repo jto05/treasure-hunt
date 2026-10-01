@@ -14,7 +14,7 @@ static int trackedLen = 0;
 int trackedCount() { return trackedLen; }
 
 static bool parseMac(
-const char *s, uint8_t out[8]) {
+const char *s, uint8_t out[6]) {
   if (!s)
     return false;
   return sscanf(s, "%hhx:%hhx:%hhx:%hhx:%hhx:%hhx", &out[0], &out[1], &out[2],
@@ -34,7 +34,7 @@ bool sendReport(const char *nodeId) {
 
   for (int i = 0; i < trackedLen; i++) {
     int rssi = getRssi(tracked[i]);
-    if (rssi = 0)
+    if (rssi == 0)
       continue; // nuffin
 
       char key[18];
@@ -54,13 +54,13 @@ bool sendReport(const char *nodeId) {
   http.addHeader("Content-Type", "application/json");
   int code = http.POST(body);
   
-  if (code = 200) {
+  if (code == 200) {
     JsonDocument resp;
-    if (deserializeJson(resp, http.getString()) == DeserializationError::Ok 
-        && resp["track"].is<JsonArray>()) {
-      
+    if (deserializeJson(resp, http.getString()) == DeserializationError::Ok
+        && resp["watch_macs"].is<JsonArray>()) {
+
       int n = 0;
-      for (JsonVariant v : resp["track"].as<JsonArray>()) {
+      for (JsonVariant v : resp["watch_macs"].as<JsonArray>()) {
         if ( n >= MAX_TRACKED )
           break;
         if (parseMac(v.as<const char*>(), tracked[n]))
