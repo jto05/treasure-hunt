@@ -36,7 +36,7 @@ Example:
 ```json
 POST /api/report
 {"node": "B", "readings": {"a4:5e:60:12:34:56": {"rssi": -58, "n": 14, "age_ms": 200}}}
-→ {"ok": true}
+→ {"ok": true, "watch_macs": ["a4:5e:60:12:34:56"]}
 
 POST /api/team {"name": "Red Rockets"}
 → {"team": "Red Rockets", "order": ["B", "C", "A"]}
@@ -44,6 +44,14 @@ POST /api/team {"name": "Red Rockets"}
 GET /api/state
 → {"phase": "hunt", "target": "C", "hint": "warm", "signal": -66, "found": false}
 ```
+
+**How a registered phone's MAC reaches the ESP32:** there's no direct
+link between them — it's routed through the server via two endpoints.
+`POST /api/team` looks up the registering phone's MAC from its request IP
+and stores it against that team. Every `POST /api/report` response then
+echoes back `watch_macs`, the full list of MACs across all registered
+teams, so each treasure knows which signals are actually worth reporting
+next time instead of every phone it overhears.
 
 Exact field names, extra endpoints (code words, live config editing,
 captive portal probes, etc.) and full response shapes are open — agree on
