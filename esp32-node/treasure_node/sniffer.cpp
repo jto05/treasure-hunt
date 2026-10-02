@@ -30,7 +30,10 @@ static void IRAM_ATTR sniffer(void *buf, wifi_promiscuous_pkt_type_t type) {
   // get the device's mac address
   const uint8_t *sender = pkt->payload + 10;
 
-  portENTER_CRITICAL_ISR(&lock);
+  // get time
+  uint32_t now = millis();
+
+  portENTER_CRITICAL(&lock);
 
   // iterate through each entry in table
   Entry *slot = &table[0]; // init slot as first entry
@@ -40,7 +43,7 @@ static void IRAM_ATTR sniffer(void *buf, wifi_promiscuous_pkt_type_t type) {
       slot = &e;
       break;
     }
-    // if unknown, use the slot that is the molst recent
+    // if unknown, use the slot that is the oldest 
     if (e.ms < slot->ms)
       slot = &e;
   }
@@ -48,9 +51,9 @@ static void IRAM_ATTR sniffer(void *buf, wifi_promiscuous_pkt_type_t type) {
   // set slot to packet data
   memcpy(slot->mac, sender, 6);
   slot->rssi = pkt->rx_ctrl.rssi;
-  slot->ms = millis();
+  slot->ms = now;
 
-  portEXIT_CRITICAL_ISR(&lock);
+  portEXIT_CRITICAL(&lock);
 }
 
 void snifferBegin() {
