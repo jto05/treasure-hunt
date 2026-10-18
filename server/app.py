@@ -1,10 +1,13 @@
 import logging
+import os
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_from_directory
 from hunt.config import load_config
 from hunt.logging_setup import configure_logging
 from hunt.netinfo import ip_to_mac
 from hunt.state import GameStore
+
+WEB_DIR = os.environ.get("WEB_DIR", os.path.join(os.path.dirname(__file__), "..", "web"))
 
 
 def create_app():
@@ -14,7 +17,7 @@ def create_app():
     app = Flask(__name__)
     config = load_config()
     store = GameStore(treasure_macs = config["treasure_macs"])
-    
+
     # Treasure reports the average RSSI per phone MAC address to server
     # every few seconds
     #
@@ -98,6 +101,15 @@ def create_app():
             "nodes": store.all_readings(),
             "teams": store.teams()
         })
+
+    # rough testing pages -- just static files served from web/
+    @app.get("/register")
+    def register_page():
+        return send_from_directory(WEB_DIR, "index.html")
+
+    @app.get("/admin")
+    def admin_page():
+        return send_from_directory(WEB_DIR, "admin/index.html")
 
     return app
 
