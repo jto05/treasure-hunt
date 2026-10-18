@@ -91,7 +91,13 @@ def create_app():
     def leaderboard():
         return jsonify()
 
-    # TODO: admin endpoints? lowk don't know if its needed
+    # NOTE: only for testing, maybe add some auth later on if we fancy :p
+    @app.get("/admin/status")
+    def admin_status():
+        return jsonify({
+            "nodes": store.all_readings(),
+            "teams": store.teams()
+        })
 
     return app
 
