@@ -2,3 +2,38 @@
 <title>Admin (test)</title>
 <h1>Admin status</h1>
 <div id="out">loading...</div>
+<script>
+async function poll() {
+  const res = await fetch("/admin/status");
+  const data = await res.json();
+  render(data);
+}
+
+function render(data) {
+  const now = Date.now() / 1000;
+  let html = "";
+
+  for (const node of Object.keys(data.nodes).sort()) {
+    html += "<h2>Node " + node + "</h2><table border=1>";
+    html += "<tr><th>MAC</th><th>RSSI</th><th>age (s)</th></tr>";
+    const readings = data.nodes[node];
+    for (const mac of Object.keys(readings)) {
+      const r = readings[mac];
+      const age = (now - r.received_at).toFixed(1);
+      html += "<tr><td>" + mac + "</td><td>" + r.rssi + "</td><td>" + age + "</td></tr>";
+    }
+    html += "</table>";
+  }
+
+  html += "<h2>Teams</h2><table border=1><tr><th>Name</th><th>MAC</th></tr>";
+  for (const t of data.teams) {
+    html += "<tr><td>" + t.name + "</td><td>" + (t.mac || "(unresolved)") + "</td></tr>";
+  }
+  html += "</table>";
+
+  document.getElementById("out").innerHTML = html;
+}
+
+poll();
+setInterval(poll, 1500);
+</script>
