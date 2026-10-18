@@ -7,14 +7,20 @@
 #endif
 
 
-const char* WIFI_SSID = "TreasureHunt";
+// if testing outside of Pi network, replace WiFi_SSID and PASSWORD
+// with your network's ssid and password
+const char* WIFI_SSID = "TreasureHunt";  
+const char* PASSWORD;   
 const int STATUS_LED = 2;
 const char* NODE = "A"; // change to specific node before flashing
 
 void connectWifi() {
   Serial.printf("Connecting to %s", WIFI_SSID);
   WiFi.mode(WIFI_STA);
-  WiFi.begin(WIFI_SSID);
+  if (!PASSWORD || !*PASSWORD)
+    WiFi.begin(WIFI_SSID);
+  else
+    WiFi.begin(WIFI_SSID, PASSWORD);
 
   while ( WiFi.status() != WL_CONNECTED ) {
     digitalWrite(STATUS_LED, !digitalRead(STATUS_LED)); // blink while attempting connect
