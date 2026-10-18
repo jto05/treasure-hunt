@@ -49,6 +49,16 @@ class GameStore():
         with self._lock:
             return dict(self._readings.get(node, {}))
 
+    def all_readings(self):
+        with self._lock:
+            return {node: dict(readings) for node, readings in self._readings.items()}
+
+    def teams(self):
+        """[{"name", "mac"}, ...]"""
+        with self._lock:
+            return [{"name": t["name"], "mac": t["mac"]} for t in self._teams.values()]
+
+
     def known_macs(self):
         with self._lock:
             macs = []
