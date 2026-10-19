@@ -5,9 +5,11 @@
 // Each entry in the table is a device being tracked
 // saved in memory.
 struct Entry {
-  uint8_t mac[6]; // each byte in 6 byte MAC is 8-bit integer
-  int8_t rssi;    // is same type as pkt->rx-ctrl.rssi
-  uint32_t ms;    //
+  uint8_t mac[6];  // each byte in 6 byte MAC is 8-bit integer
+  int8_t rssi;     // is same type as pkt->rx-ctrl.rssi
+  uint32_t ms;     //
+  uint16_t count;  // packets seen since the last getRssi() read for this
+                   // MAC -- lets the server weight how much to trust rssi
 };
 
 static Entry table[16];    // table that holds record of each device
@@ -37,13 +39,15 @@ static void IRAM_ATTR sniffer(void *buf, wifi_promiscuous_pkt_type_t type) {
 
   // iterate through each entry in table
   Entry *slot = &table[0]; // init slot as first entry
+  bool known = false;
   for (auto &e : table) {
     // if the phone is already in the table, use the slot
     if (memcmp(e.mac, sender, 6) == 0) {
       slot = &e;
+      known = true;
       break;
     }
-    // if unknown, use the slot that is the oldest 
+    // if unknown, use the slot that is the oldest
     if (e.ms < slot->ms)
       slot = &e;
   }
@@ -52,6 +56,9 @@ static void IRAM_ATTR sniffer(void *buf, wifi_promiscuous_pkt_type_t type) {
   memcpy(slot->mac, sender, 6);
   slot->rssi = pkt->rx_ctrl.rssi;
   slot->ms = now;
+  // same device seen again -> keep counting; a reused/evicted slot
+  // starts a fresh count for whoever it now belongs to
+  slot->count = known ? slot->count + 1 : 1;
 
   portEXIT_CRITICAL(&lock);
 }
@@ -67,12 +74,16 @@ void snifferBegin() {
   esp_wifi_set_promiscuous(true);
 }
 
-int getRssi(const uint8_t mac[6]) {
+int getRssi(const uint8_t mac[6], int *count) {
   int result = 0;
+  *count = 0;
   portENTER_CRITICAL(&lock);
   for (auto &e : table) {
-    if (e.ms && memcmp(e.mac, mac, 6) == 0 && millis() - e.ms < 5000)
+    if (e.ms && memcmp(e.mac, mac, 6) == 0 && millis() - e.ms < 5000) {
       result = e.rssi;
+      *count = e.count;
+      e.count = 0; // start counting fresh for the next report interval
+    }
   }
   portEXIT_CRITICAL(&lock);
   return result;

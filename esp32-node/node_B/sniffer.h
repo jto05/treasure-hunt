@@ -13,14 +13,21 @@
  *   getRssi() looks a MAC up in that table.
  *
  * USAGE
- *   snifferBegin();                  // in setup(), AFTER Wi-Fi connects
- *   int rssi = getRssi(phoneMac);    // e.g. -58, or 0 if not heard
+ *   snifferBegin();                        // in setup(), AFTER Wi-Fi connects
+ *   int n;
+ *   int rssi = getRssi(phoneMac, &n);      // e.g. -58, or 0 if not heard
+ *                                           // n = packets heard since the
+ *                                           // last call for this MAC -- the
+ *                                           // server uses it to weight how
+ *                                           // much to trust this sample
+ *                                           // (see RSSI_SMOOTHING_K server-side)
  *
  * NOTES
  *   - RSSI is in dBm and negative; closer to 0 means stronger.
  *   - A phone is only heard while it transmits, so a locked screen or closed
  *     page reads as "not heard".
- *   - Readings are raw and noisy (5-10 dB swings); smooth before use.
+ *   - RSSI itself is still raw and noisy here (5-10 dB swings) -- smoothing
+ *     across reports happens server-side, using the packet count below.
  *   - The callback runs in the Wi-Fi task, so the table is guarded by a lock
  *     and is private to sniffer.cpp. Read it only through getRssi().
  */
@@ -29,6 +36,7 @@
 // Call once, after ESP32 has joined the network
 void snifferBegin();
 
-// Pass a MAC address in to get the RSSI. Returns 0 if 
-// not heard in the last 5 seconds
-int getRssi(const uint8_t mac[6]);
+// Pass a MAC address in to get the RSSI and packet count. Returns rssi=0
+// if not heard in the last 5 seconds. *count is packets seen since the
+// last call for this MAC (reset to 0 on read), 0 if none/not heard.
+int getRssi(const uint8_t mac[6], int *count);
