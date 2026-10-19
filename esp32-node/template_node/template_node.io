@@ -12,7 +12,7 @@
 const char* WIFI_SSID = "TreasureHunt";  
 const char* PASSWORD;   
 const int STATUS_LED = 2;
-const char* NODE = "A"; // change to specific node before flashing
+const char* NODE = "C"; // change to specific node before flashing
 
 void connectWifi() {
   Serial.printf("Connecting to %s", WIFI_SSID);
