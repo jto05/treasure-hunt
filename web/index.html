@@ -1,0 +1,28 @@
+<!doctype html>
+<title>Register (test)</title>
+<h1>Register a team</h1>
+<form id="f">
+  <input name="name" placeholder="Team name" required>
+  <button type="submit">Register</button>
+</form>
+<pre id="out"></pre>
+<script>
+document.getElementById("f").onsubmit = async (e) => {
+  e.preventDefault();
+  const name = e.target.name.value;
+  const res = await fetch("/api/team", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({name})
+  });
+  const body = await res.json();
+  document.getElementById("out").textContent =
+    res.status + "\n" + JSON.stringify(body, null, 2);
+
+  // keep the phone generating Wi-Fi data traffic so the ESP32 sniffers
+  // get a steady stream of RSSI readings instead of going quiet
+  if (res.ok) {
+    setInterval(() => fetch("/api/state"), 1000);
+  }
+};
+</script>
