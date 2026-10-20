@@ -109,12 +109,42 @@ def test_record_report_separates_nodes():
     assert "3c:22:fb:ab:cd:ef" in store.get_readings("B")
 
 
-def test_record_report_overwrites_previous_reading_for_same_mac():
+def test_record_report_blends_rssi_with_weighted_ema():
+    # second report has n=5, RSSI_SMOOTHING_K=5 -> alpha=0.5, so the
+    # smoothed value is the midpoint of the two raw samples, not a
+    # straight overwrite
     store = make_store()
     store.record_report("B", {"a4:5e:60:12:34:56": {"rssi": -58, "n": 14}}, now=1000.0)
     store.record_report("B", {"a4:5e:60:12:34:56": {"rssi": -30, "n": 5}}, now=1005.0)
     reading = store.get_readings("B")["a4:5e:60:12:34:56"]
-    assert reading == {"rssi": -30, "n": 5, "received_at": 1005.0}
+    assert reading == {"rssi": -44.0, "n": 5, "received_at": 1005.0}
+
+
+def test_record_report_first_reading_for_mac_stores_raw_rssi_regardless_of_n():
+    # bootstrap case -- nothing to blend with yet, so n=0 doesn't matter
+    store = make_store()
+    store.record_report("B", {"a4:5e:60:12:34:56": {"rssi": -58, "n": 0}}, now=1000.0)
+    reading = store.get_readings("B")["a4:5e:60:12:34:56"]
+    assert reading["rssi"] == -58
+
+
+def test_record_report_n_zero_keeps_previous_smoothed_rssi():
+    # n=0 -> alpha=0 -> no new packets heard this interval, so the stale
+    # reading is kept exactly rather than blended toward a fresh sample
+    store = make_store()
+    store.record_report("B", {"a4:5e:60:12:34:56": {"rssi": -58, "n": 14}}, now=1000.0)
+    store.record_report("B", {"a4:5e:60:12:34:56": {"rssi": -90, "n": 0}}, now=1005.0)
+    reading = store.get_readings("B")["a4:5e:60:12:34:56"]
+    assert reading == {"rssi": -58.0, "n": 0, "received_at": 1005.0}
+
+
+def test_record_report_high_n_blends_close_to_new_rssi():
+    # high packet count -> alpha near 1 -> mostly trust the new sample
+    store = make_store()
+    store.record_report("B", {"a4:5e:60:12:34:56": {"rssi": -80, "n": 1}}, now=1000.0)
+    store.record_report("B", {"a4:5e:60:12:34:56": {"rssi": -40, "n": 95}}, now=1001.0)
+    reading = store.get_readings("B")["a4:5e:60:12:34:56"]
+    assert reading == {"rssi": -42.0, "n": 95, "received_at": 1001.0}
 
 
 def test_record_report_handles_missing_n():
