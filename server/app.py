@@ -30,10 +30,14 @@ def create_app():
     #     "3c:22:fb:ab:cd:ef": {"rssi": -71, "n": 3,  "age_ms": 1800}
     #   }
     # }
-    # readings is keyed by phone MAC address (lowercase); rssi is the
-    # ESP32's averaged dBm, n is packets heard in the last second, and
-    # age_ms is how long ago that MAC was last heard. Only MACs heard in
-    # the last 5s should be included.
+    # readings is keyed by phone MAC address (lowercase). rssi is the
+    # ESP32's raw last-sample dBm for this report interval -- smoothing
+    # across reports happens server-side (GameStore.record_report), not
+    # on the ESP32. n is packets heard for this mac since the ESP32's
+    # last report (not optional -- the smoothing weight depends on it,
+    # see RSSI_SMOOTHING_K in hunt/state.py). age_ms is how long ago
+    # that MAC was last heard. Only MACs heard in the last 5s should be
+    # included.
     @app.post("/api/report")
     def report():
         data = request.get_json()

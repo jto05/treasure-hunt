@@ -5,6 +5,16 @@ import threading
 
 logger = logging.getLogger(__name__)
 
+# Weight given to a new RSSI sample vs. the previously smoothed value:
+#   alpha = n / (n + RSSI_SMOOTHING_K)
+# n = packets this MAC was heard on since the last report (sent by the
+# ESP32). More packets this interval -> higher alpha -> trust the new
+# sample more. n=0 -> alpha=0 -> keep the old smoothed value unchanged,
+# which is the right behavior for a stale-but-not-yet-expired reading.
+# 5 is a starting guess -- retune once real hardware is reporting, this
+# can't be tuned meaningfully without live RSSI data.
+RSSI_SMOOTHING_K = 5
+
 
 class GameStore():
     def __init__(self, treasure_macs):
@@ -39,8 +49,19 @@ class GameStore():
                 if mac in self._treasure_macs:
                     logger.debug("ignoring treasure mac %s on node %s", mac, node)
                     continue
+
+                raw_rssi = data["rssi"]
+                n = data.get("n") or 0
+                previous = node_readings.get(mac)
+                if previous is None:
+                    # first-ever reading for this mac -- nothing to blend with
+                    smoothed_rssi = raw_rssi
+                else:
+                    alpha = n / (n + RSSI_SMOOTHING_K)
+                    smoothed_rssi = alpha * raw_rssi + (1 - alpha) * previous["rssi"]
+
                 node_readings[mac] = {
-                    "rssi": data["rssi"],
+                    "rssi": smoothed_rssi,
                     "n": data.get("n"),
                     "received_at": now,
                 }

@@ -33,7 +33,8 @@ bool sendReport(const char *nodeId) {
   JsonObject readings = req["readings"].to<JsonObject>();
 
   for (int i = 0; i < trackedLen; i++) {
-    int rssi = getRssi(tracked[i]);
+    int n = 0;
+    int rssi = getRssi(tracked[i], &n);
     if (rssi == 0)
       continue; // nuffin
 
@@ -42,7 +43,8 @@ bool sendReport(const char *nodeId) {
                tracked[i][1], tracked[i][2], tracked[i][3], tracked[i][4],
                tracked[i][5]);
       readings[key]["rssi"] = rssi;
-      Serial.printf("  %s rssi=%d\n", key, rssi);
+      readings[key]["n"] = n;
+      Serial.printf("  %s rssi=%d n=%d\n", key, rssi, n);
   }
 
   String body;
