@@ -31,11 +31,17 @@ class GameStore():
             self._treasure_macs.append(m.lower())
 
     def register_team(self, name, mac):
-        token = secrets.token_hex(16) # generates a token that acts like a key for the team
-        self._teams[token] = {
-            "name": name,
-            "mac":  mac.lower() if mac else None,
-        }
+        name = name.strip()
+        with self._lock:
+            for team in self._teams.values(): # prevent duplicate team names
+                if team["name"].lower() == name.lower():
+                    return None
+
+            token = secrets.token_hex(16) # generates a token that acts like a key for the team
+            self._teams[token] = {
+                "name": name,
+                "mac":  mac.lower() if mac else None,
+            }
         return token
 
     def record_report(self, node, readings, now=None):
@@ -88,5 +94,13 @@ class GameStore():
                     continue
                 macs.append(team["mac"])
             return macs
+
+    def get_team(self, token): # when a person refreshes there page, get their team based on cookies
+        if not token:
+            return None
+        with self._lock:
+            team = self._teams.get(token)
+            return dict(team) if team else None
+
 
 

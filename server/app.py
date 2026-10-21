@@ -6,6 +6,7 @@ from hunt.config import load_config
 from hunt.logging_setup import configure_logging
 from hunt.netinfo import ip_to_mac
 from hunt.state import GameStore
+from hunt.proximity import describe
 
 WEB_DIR = os.environ.get("WEB_DIR", os.path.join(os.path.dirname(__file__), "..", "web"))
 
@@ -61,27 +62,36 @@ def create_app():
     # Register a team
     @app.post("/api/team")
     def register_team():
+        existing = store.get_team(request.cookies.get("team"))
+        if existing:
+            return jsonify({"team": existing["name"]})
+
         data = request.get_json(silent=True)
-        if not data or "name" not in data:
+        if not data or not isinstance(data.get("name"), str):
             logger.warning("bad team registration body: %r", data)
             return jsonify({"error": "bad_json"}), 400
 
+        name = data["name"].strip()
+        if not name or len(name) > 20:
+            return jsonify({"error": "bad_name"}), 400 
+
         # get mac address from ip
         mac = ip_to_mac(request.remote_addr)
+        if mac is None:
+            logger.warning("no mac found for ip %s", request.remote_addr)
+            return jsonify({"error":"mac_not_found"}), 400
 
         # build response
         token = store.register_team(data["name"], mac)
+        if token is None:
+            logger.info("team name already taken: %r", data["name"])
+            return jsonify({"error": "name_taken"}), 409
+
         logger.info("team registered name=%r mac=%s", data["name"], mac)
         resp = jsonify({"team": data["name"]})
         # build cookie that lets player's session persist
         resp.set_cookie("team", token, httponly=True, samesite="Lax",max_age=86400)
         return resp
-
-
-    # Get the state of the page right now.
-    @app.get("/api/state")
-    def state():
-        return jsonify()
 
     # Get the description of minigame at specific node
     @app.get("/api/challenge/{node}")
@@ -114,6 +124,23 @@ def create_app():
     @app.get("/admin")
     def admin_page():
         return send_from_directory(WEB_DIR, "admin/index.html")
+    
+    # PLACEHOLDER
+    NODES = ["A", "B", "C"]
+
+    # Get the state of the page right now.
+    @app.get("/api/state")
+    def state():
+        team = store.get_team(request.cookies.get("team"))
+        if team is None:
+            return jsonify({"error": "not_registered"}), 401
+        
+        nodes = {}
+        for node in NODES:
+            reading = store.get_readings(node).get(team["mac"])
+            nodes[node] = describe(reading)
+        
+        return jsonify({"team": team["name"], "nodes":nodes})
 
     return app
 
