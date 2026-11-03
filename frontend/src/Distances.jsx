@@ -1,7 +1,7 @@
 import { useEffect, useState} from "react";
 
 // change to be on theme later
-const LABEL = {
+const LABELS = {
     here: "Here at node",
     hot: "Hot",
     warm: "Warm",
@@ -36,18 +36,23 @@ export default function Distances({onNotRegistered}){
 
     if (!state) return <p>Loading...</p>;
 
+    const { team, progress, node, distance } = state;
+
+    if (node === null) {
+        return <h2>{team}, you finished the hunt! 🏆</h2>;
+    }
+
     // display
     return (
         <div>
-            <h2>Team {state.team}</h2>
-            {Object.entries(state.nodes).map(([node, info]) => (
-                <div key={node}>
-                    <strong>Node {node}:</strong>{" "}
-                    {info.status === "ok"
-                        ? `${LABELS[info.level]} (~${info.meters} m)`
-                        : "No signal"}
-                </div>
-            ))}
+            <h2>Team {team}</h2>
+            <p>Step {progress.step + 1} of {progress.total}</p>
+            <p>
+                <strong>Head to node {node}:</strong>{" "}
+                {distance.status === "ok"
+                    ? `${LABELS[distance.level]} (~${distance.meters} m)`
+                    : "No signal"}
+            </p>
         </div>
     );
 }

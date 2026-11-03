@@ -7,6 +7,7 @@ from hunt.logging_setup import configure_logging
 from hunt.netinfo import ip_to_mac
 from hunt.state import GameStore
 from hunt.proximity import describe
+from hunt.progression import Progression
 
 WEB_DIR = os.environ.get("WEB_DIR", os.path.join(os.path.dirname(__file__), "..", "web"))
 
@@ -18,6 +19,8 @@ def create_app():
     app = Flask(__name__)
     config = load_config()
     store = GameStore(treasure_macs = config["treasure_macs"])
+    NODES = ["A", "B", "C"]
+    progression = Progression(NODES)
 
     # Treasure reports the average RSSI per phone MAC address to server
     # every few seconds
@@ -87,6 +90,7 @@ def create_app():
             logger.info("team name already taken: %r", data["name"])
             return jsonify({"error": "name_taken"}), 409
 
+        progression.start(token)
         logger.info("team registered name=%r mac=%s", data["name"], mac)
         resp = jsonify({"team": data["name"]})
         # build cookie that lets player's session persist
@@ -94,19 +98,36 @@ def create_app():
         return resp
 
     # Get the description of minigame at specific node
-    @app.get("/api/challenge/{node}")
-    def get_challenge():
+    @app.get("/api/challenge/<node>")
+    def get_challenge(node):
         return jsonify()
 
     # Start challenge at specific node
-    @app.post("/api/challenge/{node}/start")
-    def start_challenge():
-        return jsonify()
+    @app.post("/api/challenge/<node>/start")
+    def start_challenge(node):
+        token = request.cookies.get("team")
+        team = store.get_team(token)
+        if team is None:
+            return jsonify({"error": "not_registered"}), 401
+        if node != progression.current_node(token):
+            return jsonify({"error": "wrong_node"}), 403
 
     # Get leaderboard
     @app.get("/api/leaderboard")
     def leaderboard():
-        return jsonify()
+        rows = []
+        for token, step, started_at, finished_at in progression.leaderboard_rows():
+            team = store.get_team(token)
+            if team is None:
+                continue
+            rows.append({
+                "team": team["name"],
+                "step": step,
+                "total": len(NODES),
+                "finished": finished_at is not None,
+                "seconds": round(finished_at - started_at) if finished_at else None,
+            })
+        return jsonify({"leaderboard": rows})
 
     # NOTE: only for testing, maybe add some auth later on if we fancy :p
     @app.get("/admin/status")
@@ -125,22 +146,29 @@ def create_app():
     def admin_page():
         return send_from_directory(WEB_DIR, "admin/index.html")
     
-    # PLACEHOLDER
-    NODES = ["A", "B", "C"]
 
     # Get the state of the page right now.
     @app.get("/api/state")
     def state():
-        team = store.get_team(request.cookies.get("team"))
+        token = request.cookies.get("team")
+        team = store.get_team(token)
         if team is None:
             return jsonify({"error": "not_registered"}), 401
         
-        nodes = {}
-        for node in NODES:
+        progress = progression.summary(token)
+        node = progression.current_node(token)
+        distance = None
+
+        if node is not None:
             reading = store.get_readings(node).get(team["mac"])
-            nodes[node] = describe(reading)
+            distance = describe(reading)
         
-        return jsonify({"team": team["name"], "nodes":nodes})
+        return jsonify({
+            "team": team["name"], 
+            "progress": progress,
+            "node":node,
+            "distance": distance,
+        })
 
     return app
 
