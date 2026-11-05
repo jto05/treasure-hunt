@@ -1,9 +1,10 @@
 import time
 
 # NOTE: numbers to be recalibrated when testing with hardware
-RSSI_AT_1M = -30 # threshold to bieing close to a node
+RSSI_AT_1M = -30 # threshold to bieing close to a node, made into meters
 STALE_AFTER_S = 15 # after this amount of time, singal reported as lost
 PATH_LOSS_EXPONENT = 2 # apparently this varies depending if you are in or outdoors
+IN_RANGE_RSSI = -45 # needs to be calibrated when testing
 
 def rssi_to_meters(rssi):
     return 10 ** ((RSSI_AT_1M - rssi) / (10 * PATH_LOSS_EXPONENT)) # got this formula from google :D
@@ -33,4 +34,5 @@ def describe(reading, now = None):
         "level": level,
         "meters": round(rssi_to_meters(rssi)),
         "rssi": round(rssi),   # remove this later
+        "in_range": rssi > IN_RANGE_RSSI,
     }

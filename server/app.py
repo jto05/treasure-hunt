@@ -97,6 +97,26 @@ def create_app():
         resp.set_cookie("team", token, httponly=True, samesite="Lax",max_age=86400)
         return resp
 
+    # advance from completeing one node to the next
+    @app.post("/api/advance")
+    def advance():
+        token = request.cookies.get("team")
+        team = store.get_team(token)
+        if team is None:
+            return jsonify({"error": "not_registered"}), 401
+
+        node = progression.current_node(token)
+        if node is None:
+            return jsonify({"error": "finished"}), 400
+
+        #get reading from server, not browser!! users cant be trusted
+        reading = store.get_readings(node).get(team["mac"])
+        if not describe(reading).get("in_range"):
+            return jsonify({"error": "too_far"}), 403
+        
+        progression.complete(token, node)
+        return jsonify({"ok": True})
+
     # Get the description of minigame at specific node
     @app.get("/api/challenge/<node>")
     def get_challenge(node):
@@ -111,6 +131,7 @@ def create_app():
             return jsonify({"error": "not_registered"}), 401
         if node != progression.current_node(token):
             return jsonify({"error": "wrong_node"}), 403
+        return jsonify({"ok": True}) 
 
     # Get leaderboard
     @app.get("/api/leaderboard")

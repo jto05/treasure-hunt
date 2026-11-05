@@ -34,6 +34,13 @@ export default function Distances({onNotRegistered}){
         };
     }, [onNotRegistered]);
 
+    async function handleAdvance(){
+        const res = await fetch("/api/advance", {method: "POST"});
+        if (res.status === 401) return onNotRegistered?.();
+        const next = await fetch("/api/state");
+        if(next.ok) setState(await next.json());
+    }
+
     if (!state) return <p>Loading...</p>;
 
     const { team, progress, node, distance } = state;
@@ -46,13 +53,16 @@ export default function Distances({onNotRegistered}){
     return (
         <div>
             <h2>Team {team}</h2>
-            <p>Step {progress.step + 1} of {progress.total}</p>
+            <p>Node {progress.step + 1} of {progress.total}</p>
             <p>
                 <strong>Head to node {node}:</strong>{" "}
                 {distance.status === "ok"
                     ? `${LABELS[distance.level]} (~${distance.meters} m)`
                     : "No signal"}
             </p>
+            {distance.in_range && (
+                <button onClick={handleAdvance}>At Node! Next node</button>
+            )}
         </div>
     );
 }
