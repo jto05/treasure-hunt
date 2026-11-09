@@ -70,6 +70,51 @@ def test_deregister_team_twice_second_call_returns_false():
     assert store.deregister_team(token) is False
 
 
+def test_deregister_team_purges_readings_for_its_mac():
+    store = make_store()
+    token = store.register_team("Red", "a4:5e:60:12:34:56")
+    store.record_report("A", {"a4:5e:60:12:34:56": {"rssi": -50, "n": 3}})
+    assert "a4:5e:60:12:34:56" in store.get_readings("A")
+
+    store.deregister_team(token)
+
+    assert store.get_readings("A") == {}
+
+
+def test_deregister_team_purges_readings_across_all_nodes():
+    store = make_store()
+    token = store.register_team("Red", "a4:5e:60:12:34:56")
+    store.record_report("A", {"a4:5e:60:12:34:56": {"rssi": -50, "n": 3}})
+    store.record_report("B", {"a4:5e:60:12:34:56": {"rssi": -60, "n": 2}})
+
+    store.deregister_team(token)
+
+    assert store.get_readings("A") == {}
+    assert store.get_readings("B") == {}
+
+
+def test_deregister_team_does_not_purge_other_macs_readings():
+    store = make_store()
+    red_token = store.register_team("Red", "a4:5e:60:12:34:56")
+    store.register_team("Blue", "3c:22:fb:ab:cd:ef")
+    store.record_report("A", {
+        "a4:5e:60:12:34:56": {"rssi": -50, "n": 3},
+        "3c:22:fb:ab:cd:ef": {"rssi": -60, "n": 2},
+    })
+
+    store.deregister_team(red_token)
+
+    readings = store.get_readings("A")
+    assert "a4:5e:60:12:34:56" not in readings
+    assert "3c:22:fb:ab:cd:ef" in readings
+
+
+def test_deregister_team_with_no_mac_does_not_crash():
+    store = make_store()
+    token = store.register_team("Red", None)
+    assert store.deregister_team(token) is True
+
+
 # --- record_report / get_readings ---
 
 def test_record_report_stores_reading():
