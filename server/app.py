@@ -9,14 +9,14 @@ from hunt.state import GameStore
 from hunt.proximity import describe
 from hunt.progression import Progression
 
-WEB_DIR = os.environ.get("WEB_DIR", os.path.join(os.path.dirname(__file__), "..", "web"))
+WEB_DIR = os.environ.get("WEB_DIR", os.path.join(os.path.dirname(__file__), "..", "frontend", "dist"))
 
 
 def create_app():
     configure_logging()
     logger = logging.getLogger(__name__)
 
-    app = Flask(__name__)
+    app = Flask(__name__, static_folder=WEB_DIR, static_url_path="")
     config = load_config()
     store = GameStore(treasure_macs = config["treasure_macs"])
     NODES = ["A", "B", "C"]
@@ -166,6 +166,10 @@ def create_app():
     @app.get("/admin")
     def admin_page():
         return send_from_directory(WEB_DIR, "admin/index.html")
+
+    @app.get("/")
+    def index():
+        return send_from_directory(WEB_DIR, "index.html")
     
 
     # Get the state of the page right now.
@@ -195,4 +199,5 @@ def create_app():
 
 
 if __name__ == "__main__":
-    create_app().run(host="0.0.0.0", port = 8080, debug = True)
+    debug = os.environ.get("FLASK_DEBUG") == "1"
+    create_app().run(host="0.0.0.0", port = 8080, debug = debug)
