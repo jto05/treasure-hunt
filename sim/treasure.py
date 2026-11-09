@@ -10,24 +10,34 @@ CAPTURES.md / captures.csv):
 Fit from only 3 distances (1m/4m/10m) so it's an approximation, off by a
 few dB at 4m specifically -- good enough to look real, not a precise model.
 
-Each simulated phone's distance to each node does a small random walk
-every tick, so readings actually drift instead of sitting still.
+Nodes are placed along a line, evenly spaced (--node-spacing), named
+A, B, C... in order. A single simulated phone moves along that same
+line -- --behavior picks whether it walks toward the far node
+(approach), the near node (retreat), or just jitters in place (wander,
+the default), bouncing back and forth at the ends so it never stops
+moving. Distance to each node is just abs(phone_pos - node_pos), so
+with multiple nodes, approaching one is automatically receding from
+whichever one is behind it -- no separate per-node bookkeeping needed.
 
-Deliberately ignores /api/report's watch_macs reply and the whole
-team-registration flow: on a dev machine (no dnsmasq), a real team
-registration always resolves to mac=None, so watch_macs would always come
-back empty and nothing would ever get reported. This just keeps the
-server fed unconditionally instead.
+To simulate several phones with different behaviors at once, run
+multiple instances against the same server with different --mac and
+--behavior values.
+
+Deliberately skips team registration and the watch_macs reply real
+firmware respects -- on a dev machine with no dnsmasq, a registered
+team's mac always resolves to None, so watch_macs would always come
+back empty and nothing would ever get reported. This reports its fake
+mac unconditionally instead.
 
 Usage:
     python3 treasure.py
-    python3 treasure.py --server http://10.42.0.1:8080 --nodes A,B --interval 1
+    python3 treasure.py --num-nodes 5 --node-spacing 15 --behavior approach
+    python3 treasure.py --mac aa:aa:aa:aa:aa:02 --behavior retreat --speed 2
 """
 import argparse
 import json
 import math
 import random
-import threading
 import time
 import urllib.request
 
@@ -35,11 +45,7 @@ RSSI_AT_1M = -51.4
 PATH_LOSS_EXPONENT = 2.45
 NOISE_STD_DB = 3.7
 
-# mac -> {node: starting distance in meters}
-DEFAULT_PHONES = {
-    "aa:aa:aa:aa:aa:01": {"A": 2.0, "B": 6.0, "C": 12.0},
-    "aa:aa:aa:aa:aa:02": {"A": 9.0, "B": 3.0, "C": 7.0},
-}
+JITTER_M = 0.3  # per-tick positional noise, meters
 
 
 def rssi_for_distance(d):
@@ -52,12 +58,26 @@ def packet_count():
     return random.randint(1, 6)
 
 
-def wander(distance, step=0.3, bounds=(0.5, 20.0)):
-    distance += random.uniform(-step, step)
-    return min(max(distance, bounds[0]), bounds[1])
+def make_nodes(num_nodes, spacing):
+    return [(chr(ord("A") + i), i * spacing) for i in range(num_nodes)]
 
 
-def send_report(server, body):
+def step_position(position, velocity, dt, bounds):
+    position += velocity * dt + random.uniform(-JITTER_M, JITTER_M)
+    lo, hi = bounds
+    if position < lo:
+        position, velocity = lo, abs(velocity)
+    elif position > hi:
+        position, velocity = hi, -abs(velocity)
+    return position, velocity
+
+
+def send_report(server, node, mac, distance):
+    body = {
+        "node": node,
+        "uptime_ms": int(time.monotonic() * 1000),
+        "readings": {mac: {"rssi": rssi_for_distance(distance), "n": packet_count()}},
+    }
     data = json.dumps(body).encode()
     req = urllib.request.Request(
         f"{server}/api/report", data=data,
@@ -65,27 +85,9 @@ def send_report(server, body):
     )
     try:
         with urllib.request.urlopen(req, timeout=2) as resp:
-            print(f"[{body['node']}] sent=ok macs={len(body['readings'])} status={resp.status}")
+            print(f"[{node}] dist={distance:5.1f}m sent=ok status={resp.status}")
     except Exception as e:
-        print(f"[{body['node']}] sent=FAILED ({e})")
-
-
-def node_loop(node, server, phones, interval, stop):
-    distances = {mac: dists[node] for mac, dists in phones.items() if node in dists}
-    start = time.monotonic()
-
-    while not stop.is_set():
-        readings = {}
-        for mac in distances:
-            distances[mac] = wander(distances[mac])
-            readings[mac] = {"rssi": rssi_for_distance(distances[mac]), "n": packet_count()}
-
-        send_report(server, {
-            "node": node,
-            "uptime_ms": int((time.monotonic() - start) * 1000),
-            "readings": readings,
-        })
-        stop.wait(interval)
+        print(f"[{node}] sent=FAILED ({e})")
 
 
 def main():
@@ -93,33 +95,38 @@ def main():
                                   formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--server", default="http://localhost:8080",
                      help="game server base URL (default: %(default)s)")
-    ap.add_argument("--nodes", default="A,B,C",
-                     help="comma-separated node letters to simulate (default: %(default)s)")
+    ap.add_argument("--num-nodes", type=int, default=3,
+                     help="how many nodes to simulate, named A, B, C... (default: %(default)s)")
+    ap.add_argument("--node-spacing", type=float, default=10.0,
+                     help="meters between adjacent nodes (default: %(default)s)")
+    ap.add_argument("--behavior", choices=["approach", "retreat", "wander"], default="wander",
+                     help="approach = walk toward the far node, retreat = walk toward "
+                          "the near node, wander = jitter in place (default: %(default)s)")
+    ap.add_argument("--speed", type=float, default=1.0,
+                     help="walking speed in m/s for approach/retreat (default: %(default)s)")
+    ap.add_argument("--mac", default="aa:aa:aa:aa:aa:01",
+                     help="fake phone MAC to report (default: %(default)s)")
     ap.add_argument("--interval", type=float, default=1.0,
-                     help="seconds between reports per node (default: %(default)s)")
+                     help="seconds between report rounds (default: %(default)s)")
     args = ap.parse_args()
 
-    nodes = args.nodes.split(",")
-    stop = threading.Event()
-    threads = [
-        threading.Thread(target=node_loop,
-                          args=(node, args.server, DEFAULT_PHONES, args.interval, stop),
-                          daemon=True)
-        for node in nodes
-    ]
+    nodes = make_nodes(args.num_nodes, args.node_spacing)
+    bounds = (0.0, nodes[-1][1]) if len(nodes) > 1 else (0.0, args.node_spacing)
+    velocity = {"approach": args.speed, "retreat": -args.speed, "wander": 0.0}[args.behavior]
+    position = (bounds[0] + bounds[1]) / 2
 
-    print(f"simulating nodes {nodes} -> {args.server} every {args.interval}s (Ctrl+C to stop)")
-    for t in threads:
-        t.start()
+    print(f"nodes: {[(n, round(p, 1)) for n, p in nodes]}")
+    print(f"behavior={args.behavior} speed={args.speed}m/s mac={args.mac} "
+          f"-> {args.server} every {args.interval}s (Ctrl+C to stop)")
 
     try:
         while True:
-            time.sleep(1)
+            position, velocity = step_position(position, velocity, args.interval, bounds)
+            for node, node_pos in nodes:
+                send_report(args.server, node, args.mac, abs(position - node_pos))
+            time.sleep(args.interval)
     except KeyboardInterrupt:
         print("stopping...")
-        stop.set()
-        for t in threads:
-            t.join()
 
 
 if __name__ == "__main__":
