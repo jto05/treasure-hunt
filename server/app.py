@@ -76,7 +76,7 @@ def create_app():
 
     # Deregister a team
     @app.delete("/api/team")
-    def deregiste_team():
+    def deregister_team():
         token = request.cookies.get("team")
         if not token:
             return jsonify({"error": "not registered"}), 400
