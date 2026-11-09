@@ -60,7 +60,9 @@ capture whose filename doesn't fit the `<number>m` pattern.
 
 | file | distance | board | notes |
 |---|---|---|---|
-| _(none committed yet)_ | | | |
+| `captures/dist_1m.log` | 1m | ? | |
+| `captures/dist_4m.log` | 4m | ? | |
+| `captures/dist_10m.log` | 10m | ? | |
 
 Update this table each time a new capture is added, so it's clear
 what's already covered and what distances are still missing.
