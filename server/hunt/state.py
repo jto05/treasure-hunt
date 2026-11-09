@@ -38,6 +38,11 @@ class GameStore():
         }
         return token
 
+    def deregister_team(self, token):
+        with self._lock:
+            # returns if removal was successful (false if token does not exist in teams)
+            return self._teams.pop(token, None) is not None
+
     def record_report(self, node, readings, now=None):
         if now is None:
             now = time.time()
