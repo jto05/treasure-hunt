@@ -1,3 +1,4 @@
+import ipaddress
 import logging
 import os
 
@@ -19,9 +20,21 @@ def _client_ip(req):
     # fine here: the only thing ever in front of Flask is that proxy, on
     # an isolated AP with no other client able to reach it directly.
     forwarded = req.headers.get("X-Forwarded-For")
-    if forwarded:
-        return forwarded.split(",")[0].strip()
-    return req.remote_addr
+    raw = forwarded.split(",")[0].strip() if forwarded else req.remote_addr
+    return _normalize_ip(raw)
+
+
+def _normalize_ip(raw):
+    # a dual-stack socket (e.g. Vite's dev server) reports an IPv4 client
+    # as IPv4-mapped IPv6 (::ffff:a.b.c.d) -- dnsmasq.leases only ever has
+    # plain IPv4, so unwrap it back to that when present.
+    try:
+        addr = ipaddress.ip_address(raw)
+    except ValueError:
+        return raw  # not a parseable IP at all -- pass through as-is
+
+    mapped = getattr(addr, "ipv4_mapped", None)
+    return str(mapped) if mapped else str(addr)
 
 # /admin hasn't been ported into the React app yet -- it still lives in
 # the old static web/ directory, which is not WEB_DIR (that's the React
