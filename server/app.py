@@ -77,6 +77,20 @@ def create_app():
         resp.set_cookie("team", token, httponly=True, samesite="Lax",max_age=86400)
         return resp
 
+    # Deregister a team
+    @app.delete("/api/team")
+    def deregister_team():
+        token = request.cookies.get("team")
+        if not token:
+            return jsonify({"error": "not registered"}), 400
+        
+        removed = store.deregister_team(token)
+        logger.info("team deregistered token=%s removed=%s", token, removed)
+
+        resp = jsonify({"ok": True})
+        resp.delete_cookie("team")
+        return resp
+
 
     # Get the state of the page right now.
     @app.get("/api/state")
