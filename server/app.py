@@ -11,6 +11,18 @@ from hunt.progression import Progression
 
 WEB_DIR = os.environ.get("WEB_DIR", os.path.join(os.path.dirname(__file__), "..", "frontend", "dist"))
 
+
+def _client_ip(req):
+    # the Vite dev proxy (frontend/vite.config.js, xfwd: true) sets this
+    # to the real device's IP -- without it, req.remote_addr would just
+    # be the proxy's own loopback connection. Trusting this header is
+    # fine here: the only thing ever in front of Flask is that proxy, on
+    # an isolated AP with no other client able to reach it directly.
+    forwarded = req.headers.get("X-Forwarded-For")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return req.remote_addr
+
 # /admin hasn't been ported into the React app yet -- it still lives in
 # the old static web/ directory, which is not WEB_DIR (that's the React
 # build output now). Point it there directly until it's ported.
@@ -85,9 +97,10 @@ def create_app():
             return jsonify({"error": "bad_name"}), 400 
 
         # get mac address from ip
-        mac = ip_to_mac(request.remote_addr)
+        client_ip = _client_ip(request)
+        mac = ip_to_mac(client_ip)
         if mac is None:
-            logger.warning("no mac found for ip %s", request.remote_addr)
+            logger.warning("no mac found for ip %s", client_ip)
             return jsonify({"error":"mac_not_found"}), 400
 
         # build response
