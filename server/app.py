@@ -131,12 +131,6 @@ def create_app():
         resp.delete_cookie("team")
         return resp
 
-
-    # Get the state of the page right now.
-    @app.get("/api/state")
-    def state():
-        return jsonify()
-
     # Get the description of minigame at specific node
     @app.get("/api/challenge/<node>")
     def get_challenge(node):
