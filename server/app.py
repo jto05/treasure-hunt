@@ -83,21 +83,23 @@ def create_app():
     # Register a team
     @app.post("/api/team")
     def register_team():
+        client_ip = _client_ip(request)
+
         existing = store.get_team(request.cookies.get("team"))
         if existing:
             return jsonify({"team": existing["name"]})
 
         data = request.get_json(silent=True)
         if not data or not isinstance(data.get("name"), str):
-            logger.warning("bad team registration body: %r", data)
+            logger.warning("bad team registration body: %r ip=%s", data, client_ip)
             return jsonify({"error": "bad_json"}), 400
 
         name = data["name"].strip()
         if not name or len(name) > 20:
-            return jsonify({"error": "bad_name"}), 400 
+            logger.warning("bad team name: %r ip=%s", name, client_ip)
+            return jsonify({"error": "bad_name"}), 400
 
         # get mac address from ip
-        client_ip = _client_ip(request)
         mac = ip_to_mac(client_ip)
         if mac is None:
             logger.warning("no mac found for ip %s", client_ip)
@@ -106,7 +108,7 @@ def create_app():
         # build response
         token = store.register_team(data["name"], mac)
         if token is None:
-            logger.info("team name already taken: %r", data["name"])
+            logger.info("team name already taken: %r ip=%s", data["name"], client_ip)
             return jsonify({"error": "name_taken"}), 409
 
         progression.start(token)
