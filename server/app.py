@@ -1,3 +1,4 @@
+import ipaddress
 import logging
 import os
 
@@ -10,6 +11,35 @@ from hunt.proximity import describe
 from hunt.progression import Progression
 
 WEB_DIR = os.environ.get("WEB_DIR", os.path.join(os.path.dirname(__file__), "..", "frontend", "dist"))
+
+
+def _client_ip(req):
+    # the Vite dev proxy (frontend/vite.config.js, xfwd: true) sets this
+    # to the real device's IP -- without it, req.remote_addr would just
+    # be the proxy's own loopback connection. Trusting this header is
+    # fine here: the only thing ever in front of Flask is that proxy, on
+    # an isolated AP with no other client able to reach it directly.
+    forwarded = req.headers.get("X-Forwarded-For")
+    raw = forwarded.split(",")[0].strip() if forwarded else req.remote_addr
+    return _normalize_ip(raw)
+
+
+def _normalize_ip(raw):
+    # a dual-stack socket (e.g. Vite's dev server) reports an IPv4 client
+    # as IPv4-mapped IPv6 (::ffff:a.b.c.d) -- dnsmasq.leases only ever has
+    # plain IPv4, so unwrap it back to that when present.
+    try:
+        addr = ipaddress.ip_address(raw)
+    except ValueError:
+        return raw  # not a parseable IP at all -- pass through as-is
+
+    mapped = getattr(addr, "ipv4_mapped", None)
+    return str(mapped) if mapped else str(addr)
+
+# /admin hasn't been ported into the React app yet -- it still lives in
+# the old static web/ directory, which is not WEB_DIR (that's the React
+# build output now). Point it there directly until it's ported.
+LEGACY_WEB_DIR = os.path.join(os.path.dirname(__file__), "..", "web")
 
 
 def create_app():
@@ -66,29 +96,32 @@ def create_app():
     # Register a team
     @app.post("/api/team")
     def register_team():
+        client_ip = _client_ip(request)
+
         existing = store.get_team(request.cookies.get("team"))
         if existing:
             return jsonify({"team": existing["name"]})
 
         data = request.get_json(silent=True)
         if not data or not isinstance(data.get("name"), str):
-            logger.warning("bad team registration body: %r", data)
+            logger.warning("bad team registration body: %r ip=%s", data, client_ip)
             return jsonify({"error": "bad_json"}), 400
 
         name = data["name"].strip()
         if not name or len(name) > 20:
-            return jsonify({"error": "bad_name"}), 400 
+            logger.warning("bad team name: %r ip=%s", name, client_ip)
+            return jsonify({"error": "bad_name"}), 400
 
         # get mac address from ip
-        mac = ip_to_mac(request.remote_addr)
+        mac = ip_to_mac(client_ip)
         if mac is None:
-            logger.warning("no mac found for ip %s", request.remote_addr)
+            logger.warning("no mac found for ip %s", client_ip)
             return jsonify({"error":"mac_not_found"}), 400
 
         # build response
         token = store.register_team(data["name"], mac)
         if token is None:
-            logger.info("team name already taken: %r", data["name"])
+            logger.info("team name already taken: %r ip=%s", data["name"], client_ip)
             return jsonify({"error": "name_taken"}), 409
 
         progression.start(token)
@@ -164,6 +197,11 @@ def create_app():
             })
         return jsonify({"leaderboard": rows})
 
+    # rough testing pages -- just static files served from web/
+    @app.get("/register")
+    def register_page():
+        return send_from_directory(WEB_DIR, "index.html")
+
     # NOTE: only for testing, maybe add some auth later on if we fancy :p
     @app.get("/admin/status")
     def admin_status():
@@ -172,14 +210,9 @@ def create_app():
             "teams": store.teams()
         })
 
-    # rough testing pages -- just static files served from web/
-    @app.get("/register")
-    def register_page():
-        return send_from_directory(WEB_DIR, "index.html")
-
     @app.get("/admin")
     def admin_page():
-        return send_from_directory(WEB_DIR, "admin/index.html")
+        return send_from_directory(LEGACY_WEB_DIR, "admin/index.html")
 
     @app.get("/")
     def index():
@@ -208,22 +241,6 @@ def create_app():
             "node":node,
             "distance": distance,
         })
-    # NOTE: only for testing, maybe add some auth later on if we fancy :p
-    @app.get("/admin/status")
-    def admin_status():
-        return jsonify({
-            "nodes": store.all_readings(),
-            "teams": store.teams()
-        })
-
-    # rough testing pages -- just static files served from web/
-    @app.get("/register")
-    def register_page():
-        return send_from_directory(WEB_DIR, "index.html")
-
-    @app.get("/admin")
-    def admin_page():
-        return send_from_directory(WEB_DIR, "admin/index.html")
 
     return app
 
