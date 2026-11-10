@@ -6,17 +6,22 @@ from hunt.config import load_config
 from hunt.logging_setup import configure_logging
 from hunt.netinfo import ip_to_mac
 from hunt.state import GameStore
+from hunt.proximity import describe
+from hunt.progression import Progression
 
-WEB_DIR = os.environ.get("WEB_DIR", os.path.join(os.path.dirname(__file__), "..", "web"))
+WEB_DIR = os.environ.get("WEB_DIR", os.path.join(os.path.dirname(__file__), "..", "frontend", "dist"))
 
 
 def create_app():
     configure_logging()
     logger = logging.getLogger(__name__)
 
-    app = Flask(__name__)
+    app = Flask(__name__, static_folder=WEB_DIR, static_url_path="")
     config = load_config()
     store = GameStore(treasure_macs = config["treasure_macs"])
+    NODES = ["A", "B", "C"]
+    progression = Progression(NODES)
+
 
     # Treasure reports the average RSSI per phone MAC address to server
     # every few seconds
@@ -61,22 +66,57 @@ def create_app():
     # Register a team
     @app.post("/api/team")
     def register_team():
+        existing = store.get_team(request.cookies.get("team"))
+        if existing:
+            return jsonify({"team": existing["name"]})
+
         data = request.get_json(silent=True)
-        if not data or "name" not in data:
+        if not data or not isinstance(data.get("name"), str):
             logger.warning("bad team registration body: %r", data)
             return jsonify({"error": "bad_json"}), 400
 
+        name = data["name"].strip()
+        if not name or len(name) > 20:
+            return jsonify({"error": "bad_name"}), 400 
+
         # get mac address from ip
         mac = ip_to_mac(request.remote_addr)
+        if mac is None:
+            logger.warning("no mac found for ip %s", request.remote_addr)
+            return jsonify({"error":"mac_not_found"}), 400
 
         # build response
         token = store.register_team(data["name"], mac)
+        if token is None:
+            logger.info("team name already taken: %r", data["name"])
+            return jsonify({"error": "name_taken"}), 409
+
+        progression.start(token)
         logger.info("team registered name=%r mac=%s", data["name"], mac)
         resp = jsonify({"team": data["name"]})
         # build cookie that lets player's session persist
         resp.set_cookie("team", token, httponly=True, samesite="Lax",max_age=86400)
         return resp
 
+    # advance from completeing one node to the next
+    @app.post("/api/advance")
+    def advance():
+        token = request.cookies.get("team")
+        team = store.get_team(token)
+        if team is None:
+            return jsonify({"error": "not_registered"}), 401
+
+        node = progression.current_node(token)
+        if node is None:
+            return jsonify({"error": "finished"}), 400
+
+        #get reading from server, not browser!! users cant be trusted
+        reading = store.get_readings(node).get(team["mac"])
+        if not describe(reading).get("in_range"):
+            return jsonify({"error": "too_far"}), 403
+        
+        progression.complete(token, node)
+        return jsonify({"ok": True})
     # Deregister a team
     @app.delete("/api/team")
     def deregister_team():
@@ -91,27 +131,83 @@ def create_app():
         resp.delete_cookie("team")
         return resp
 
-
-    # Get the state of the page right now.
-    @app.get("/api/state")
-    def state():
-        return jsonify()
-
     # Get the description of minigame at specific node
-    @app.get("/api/challenge/{node}")
-    def get_challenge():
+    @app.get("/api/challenge/<node>")
+    def get_challenge(node):
         return jsonify()
 
     # Start challenge at specific node
-    @app.post("/api/challenge/{node}/start")
-    def start_challenge():
-        return jsonify()
+    @app.post("/api/challenge/<node>/start")
+    def start_challenge(node):
+        token = request.cookies.get("team")
+        team = store.get_team(token)
+        if team is None:
+            return jsonify({"error": "not_registered"}), 401
+        if node != progression.current_node(token):
+            return jsonify({"error": "wrong_node"}), 403
+        return jsonify({"ok": True}) 
 
     # Get leaderboard
     @app.get("/api/leaderboard")
     def leaderboard():
-        return jsonify()
+        rows = []
+        for token, step, started_at, finished_at in progression.leaderboard_rows():
+            team = store.get_team(token)
+            if team is None:
+                continue
+            rows.append({
+                "team": team["name"],
+                "step": step,
+                "total": len(NODES),
+                "finished": finished_at is not None,
+                "seconds": round(finished_at - started_at) if finished_at else None,
+            })
+        return jsonify({"leaderboard": rows})
 
+    # NOTE: only for testing, maybe add some auth later on if we fancy :p
+    @app.get("/admin/status")
+    def admin_status():
+        return jsonify({
+            "nodes": store.all_readings(),
+            "teams": store.teams()
+        })
+
+    # rough testing pages -- just static files served from web/
+    @app.get("/register")
+    def register_page():
+        return send_from_directory(WEB_DIR, "index.html")
+
+    @app.get("/admin")
+    def admin_page():
+        return send_from_directory(WEB_DIR, "admin/index.html")
+
+    @app.get("/")
+    def index():
+        return send_from_directory(WEB_DIR, "index.html")
+    
+
+    # Get the state of the page right now.
+    @app.get("/api/state")
+    def state():
+        token = request.cookies.get("team")
+        team = store.get_team(token)
+        if team is None:
+            return jsonify({"error": "not_registered"}), 401
+        
+        progress = progression.summary(token)
+        node = progression.current_node(token)
+        distance = None
+
+        if node is not None:
+            reading = store.get_readings(node).get(team["mac"])
+            distance = describe(reading)
+        
+        return jsonify({
+            "team": team["name"], 
+            "progress": progress,
+            "node":node,
+            "distance": distance,
+        })
     # NOTE: only for testing, maybe add some auth later on if we fancy :p
     @app.get("/admin/status")
     def admin_status():
@@ -133,4 +229,5 @@ def create_app():
 
 
 if __name__ == "__main__":
-    create_app().run(host="0.0.0.0", port = 8080, debug = True)
+    debug = os.environ.get("FLASK_DEBUG") == "1"
+    create_app().run(host="0.0.0.0", port = 8080, debug = debug)

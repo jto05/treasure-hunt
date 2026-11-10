@@ -13,8 +13,11 @@ Caveat: dependent on dnsmasq service :( if dnsmasq crashes and restarts
 or something... new leases would be dished out, breaking the 
 registered teams
 """
+import os
 
-def ip_to_mac(ip, leases_path= "/var/lib/misc/dnsmasq.leases"):
+def ip_to_mac(ip, leases_path= None):
+    if leases_path is None:
+        leases_path = os.environ.get("LEASES_PATH", "/var/lib/misc/dnsmasq.leases")
     return _from_leases(ip, leases_path)
 
 
