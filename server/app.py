@@ -22,6 +22,7 @@ def create_app():
     NODES = ["A", "B", "C"]
     progression = Progression(NODES)
 
+
     # Treasure reports the average RSSI per phone MAC address to server
     # every few seconds
     #
@@ -116,6 +117,25 @@ def create_app():
         
         progression.complete(token, node)
         return jsonify({"ok": True})
+    # Deregister a team
+    @app.delete("/api/team")
+    def deregister_team():
+        token = request.cookies.get("team")
+        if not token:
+            return jsonify({"error": "not registered"}), 400
+        
+        removed = store.deregister_team(token)
+        logger.info("team deregistered token=%s removed=%s", token, removed)
+
+        resp = jsonify({"ok": True})
+        resp.delete_cookie("team")
+        return resp
+
+
+    # Get the state of the page right now.
+    @app.get("/api/state")
+    def state():
+        return jsonify()
 
     # Get the description of minigame at specific node
     @app.get("/api/challenge/<node>")
@@ -194,6 +214,22 @@ def create_app():
             "node":node,
             "distance": distance,
         })
+    # NOTE: only for testing, maybe add some auth later on if we fancy :p
+    @app.get("/admin/status")
+    def admin_status():
+        return jsonify({
+            "nodes": store.all_readings(),
+            "teams": store.teams()
+        })
+
+    # rough testing pages -- just static files served from web/
+    @app.get("/register")
+    def register_page():
+        return send_from_directory(WEB_DIR, "index.html")
+
+    @app.get("/admin")
+    def admin_page():
+        return send_from_directory(WEB_DIR, "admin/index.html")
 
     return app
 

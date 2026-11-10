@@ -44,6 +44,23 @@ class GameStore():
             }
         return token
 
+    def deregister_team(self, token):
+        with self._lock:
+            # returns if removal was successful (false if token does not exist in teams)
+            team = self._teams.pop(token, None)
+            if team is None:
+                return False
+
+            # drop any stale readings for this team's mac too, so a
+            # deregistered team's last-known reading doesn't sit around
+            # forever on the admin page
+            mac = team["mac"]
+            if mac:
+                for node_readings in self._readings.values():
+                    node_readings.pop(mac, None)
+
+            return True
+
     def record_report(self, node, readings, now=None):
         if now is None:
             now = time.time()
