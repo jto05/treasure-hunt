@@ -11,6 +11,11 @@ from hunt.progression import Progression
 
 WEB_DIR = os.environ.get("WEB_DIR", os.path.join(os.path.dirname(__file__), "..", "frontend", "dist"))
 
+# /admin hasn't been ported into the React app yet -- it still lives in
+# the old static web/ directory, which is not WEB_DIR (that's the React
+# build output now). Point it there directly until it's ported.
+LEGACY_WEB_DIR = os.path.join(os.path.dirname(__file__), "..", "web")
+
 
 def create_app():
     configure_logging()
@@ -164,6 +169,11 @@ def create_app():
             })
         return jsonify({"leaderboard": rows})
 
+    # rough testing pages -- just static files served from web/
+    @app.get("/register")
+    def register_page():
+        return send_from_directory(WEB_DIR, "index.html")
+
     # NOTE: only for testing, maybe add some auth later on if we fancy :p
     @app.get("/admin/status")
     def admin_status():
@@ -172,14 +182,9 @@ def create_app():
             "teams": store.teams()
         })
 
-    # rough testing pages -- just static files served from web/
-    @app.get("/register")
-    def register_page():
-        return send_from_directory(WEB_DIR, "index.html")
-
     @app.get("/admin")
     def admin_page():
-        return send_from_directory(WEB_DIR, "admin/index.html")
+        return send_from_directory(LEGACY_WEB_DIR, "admin/index.html")
 
     @app.get("/")
     def index():
@@ -208,22 +213,6 @@ def create_app():
             "node":node,
             "distance": distance,
         })
-    # NOTE: only for testing, maybe add some auth later on if we fancy :p
-    @app.get("/admin/status")
-    def admin_status():
-        return jsonify({
-            "nodes": store.all_readings(),
-            "teams": store.teams()
-        })
-
-    # rough testing pages -- just static files served from web/
-    @app.get("/register")
-    def register_page():
-        return send_from_directory(WEB_DIR, "index.html")
-
-    @app.get("/admin")
-    def admin_page():
-        return send_from_directory(WEB_DIR, "admin/index.html")
 
     return app
 
