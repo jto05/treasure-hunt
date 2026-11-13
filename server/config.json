@@ -5,8 +5,6 @@
     "<placeholder>"
   ],
   "challenges": {
-    "A": {"type": "trivia","question": "whats 1+1?", "answer": "2"},
-    "B": {"type": "tbd", },
-    "C": {"type": "tbd", },
+    "A": {"type": "trivia","question": "whats 1+1?", "answer": "2"}
   }
 }
