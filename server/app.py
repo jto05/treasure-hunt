@@ -9,6 +9,7 @@ from hunt.netinfo import ip_to_mac
 from hunt.state import GameStore
 from hunt.proximity import describe
 from hunt.progression import Progression
+import hunt.challenges import build
 
 WEB_DIR = os.environ.get("WEB_DIR", os.path.join(os.path.dirname(__file__), "..", "frontend", "dist"))
 
@@ -48,6 +49,13 @@ def create_app():
 
     app = Flask(__name__, static_folder=WEB_DIR, static_url_path="")
     config = load_config()
+
+    # build challenges
+    challenges = {}
+    for node, cfg in config.get("challenges", {}).items():
+        challenges[node] = build(cfg)
+        
+
     store = GameStore(treasure_macs = config["treasure_macs"])
     NODES = ["A", "B", "C"]
     progression = Progression(NODES)
@@ -150,6 +158,7 @@ def create_app():
         
         progression.complete(token, node)
         return jsonify({"ok": True})
+
     # Deregister a team
     @app.delete("/api/team")
     def deregister_team():
