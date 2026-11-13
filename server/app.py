@@ -9,7 +9,7 @@ from hunt.netinfo import ip_to_mac
 from hunt.state import GameStore
 from hunt.proximity import describe
 from hunt.progression import Progression
-import hunt.challenges import build
+from hunt.challenges import build
 
 WEB_DIR = os.environ.get("WEB_DIR", os.path.join(os.path.dirname(__file__), "..", "frontend", "dist"))
 
@@ -187,7 +187,27 @@ def create_app():
             return jsonify({"error": "not_registered"}), 401
         if node != progression.current_node(token):
             return jsonify({"error": "wrong_node"}), 403
-        return jsonify({"ok": True}) 
+
+        # start respective challenge and return result
+        return jsonify(challenges[node].start(token))
+
+    # Submit an answer to the challenge at a specific node
+    @app.post("/api/challenge/<node>/submit")
+    def submit_challenge(node):
+        token = request.cookies.get("team")
+        team = store.get_team(token)
+        if team is None:
+            return jsonify({"error": "not_registered"}), 401
+        if node != progression.current_node(token):
+            return jsonify({"error": "wrong_node"}), 403
+
+        data = request.get_json(silent=True) or {}
+        result = challenges[node].submit(token, data.get("answer"))
+
+        # NOTE: Automaticaly progress if it was correct is optional
+        # if result.get("correct"):
+        #     progression.complete(token, node)
+        return jsonify(result)
 
     # Get leaderboard
     @app.get("/api/leaderboard")
