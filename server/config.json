@@ -3,5 +3,10 @@
     "8c:aa:b5:37:8c:04",
     "<placeholder>",
     "<placeholder>"
-  ]
+  ],
+  "challenges": {
+    "A": {"type": "trivia","question": "whats 1+1?", "answer": "2"},
+    "B": {"type": "tbd", },
+    "C": {"type": "tbd", },
+  }
 }
