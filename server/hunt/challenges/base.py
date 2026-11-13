@@ -7,9 +7,9 @@ class Challenge:
     functions below MUST be implemented
     """
 
-    def start(self, token):
+    def start(self, token) -> dict:
         raise NotImplementedError
 
-    def submit(self, token, answer):
+    def submit(self, token, answer) -> dict:
         raise NotImplementedError
 
