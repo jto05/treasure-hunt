@@ -1,4 +1,4 @@
-from base.py import Challenge
+from .base import Challenge
 class Trivia(Challenge):
 
     """
@@ -16,10 +16,12 @@ class Trivia(Challenge):
 
     # anything returned by tihs function will be included in response to frontend
     # like the quesiton bein asked!
-    def start(self, token):
+    def start(self, token) -> dict:
         # pls return as a dictionary
         return {"question": self.config["question"]}
 
     # returns if that answer was correct
-    def submit(self, token, answer) -> bool:
-        return self.config["answer"] == answer
+    def submit(self, token, answer) -> dict:
+        # return as a dict b/c everything routed through http server is JSON
+        correct = self.config["answer"] == answer
+        return {"correct": correct}
