@@ -9,6 +9,7 @@ from hunt.netinfo import ip_to_mac
 from hunt.state import GameStore
 from hunt.proximity import describe
 from hunt.progression import Progression
+from hunt.challenges import build
 
 WEB_DIR = os.environ.get("WEB_DIR", os.path.join(os.path.dirname(__file__), "..", "frontend", "dist"))
 
@@ -48,6 +49,13 @@ def create_app():
 
     app = Flask(__name__, static_folder=WEB_DIR, static_url_path="")
     config = load_config()
+
+    # build challenges
+    challenges = {}
+    for node, cfg in config.get("challenges", {}).items():
+        challenges[node] = build(cfg)
+        
+
     store = GameStore(treasure_macs = config["treasure_macs"])
     NODES = ["A", "B", "C"]
     progression = Progression(NODES)
@@ -150,6 +158,7 @@ def create_app():
         
         progression.complete(token, node)
         return jsonify({"ok": True})
+
     # Deregister a team
     @app.delete("/api/team")
     def deregister_team():
@@ -178,7 +187,27 @@ def create_app():
             return jsonify({"error": "not_registered"}), 401
         if node != progression.current_node(token):
             return jsonify({"error": "wrong_node"}), 403
-        return jsonify({"ok": True}) 
+
+        # start respective challenge and return result
+        return jsonify(challenges[node].start(token))
+
+    # Submit an answer to the challenge at a specific node
+    @app.post("/api/challenge/<node>/submit")
+    def submit_challenge(node):
+        token = request.cookies.get("team")
+        team = store.get_team(token)
+        if team is None:
+            return jsonify({"error": "not_registered"}), 401
+        if node != progression.current_node(token):
+            return jsonify({"error": "wrong_node"}), 403
+
+        data = request.get_json(silent=True) or {}
+        result = challenges[node].submit(token, data.get("answer"))
+
+        # NOTE: Automaticaly progress if it was correct is optional
+        # if result.get("correct"):
+        #     progression.complete(token, node)
+        return jsonify(result)
 
     # Get leaderboard
     @app.get("/api/leaderboard")
