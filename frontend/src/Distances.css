@@ -1,0 +1,80 @@
+@import url('https://fonts.googleapis.com/css2?family=Darumadrop+One&display=swap" rel="stylesheet"');
+
+.distances{
+    min-height: 100vh;
+    display: flex;
+    align-items: center;      
+    justify-content: center;
+    padding: 1rem;
+    font-family: "Darumadrop One", sans-serif;
+}
+
+.distances-card{
+    width: 100%;
+    max-width: 20rem;         
+    background: var(--card);
+    padding: 0rem 2rem 2rem 2rem; /*top, right, bottom, left */
+    border-radius: 1rem; /* round corners*/
+    display: flex;
+    flex-direction: column;
+}
+
+.distances-title{
+    text-align: center;
+    font-size: 150%;
+    margin-top: 1rem;
+    margin-bottom: 0rem;
+}
+
+.distances-key{
+    text-align: center;
+    margin-top: 0;
+}
+
+.distances-progress{
+    text-align: center;
+    font-size : 200%;
+    margin-top: 0;
+    margin-bottom: 1rem;
+}
+
+.advance-button{
+    font-family: "Darumadrop One", sans-serif;
+    background: var(--accent);
+    width: 40%;
+    border-radius: .5rem;
+    padding: .5rem;
+    cursor: pointer;
+    align-self: center;
+    margin-top: 0rem;
+    margin-bottom: 0rem;
+}
+
+.advance-button:active{
+    transform: scale(.90);
+    filter: brightness(.90);
+}
+
+.endScreen{
+    min-height: 100vh;
+    display: flex;
+    align-items: center;      
+    justify-content: center;
+    padding: 1rem;
+    font-family: "Darumadrop One", sans-serif;
+}
+
+.endScreen-card{
+    width: 100%;
+    max-width: 20rem;         
+    background: var(--card);
+    padding: 2rem; /*top, right, bottom, left */
+    border-radius: 1rem; /* round corners*/
+    display: flex;
+    flex-direction: column;
+}
+
+.endScreen-text{
+    text-align: center;
+    font-size : 200%;
+}

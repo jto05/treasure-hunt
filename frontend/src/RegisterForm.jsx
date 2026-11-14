@@ -1,3 +1,4 @@
+import './RegisterForm.css'
 import { useState } from "react";
 
 export default function RegisterForm({onSuccess}){
@@ -24,16 +25,19 @@ export default function RegisterForm({onSuccess}){
     }
 
     // display
-    return(
-        <form onSubmit={handleSubmit}>
-            <h1>Join the Hunt!</h1>
+    return (
+    <div className="register">
+        <form className="register-card" onSubmit={handleSubmit}>
+            <h1 className="register-title">Treasure Hunt</h1>
             <input
-                value = {name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder = "Team name"
+            className="register-input"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Team name"
             />
-            <button type = "submit">Join</button>
-            {error && <p>{error}</p>} 
+            <button className="register-button" type="submit">Join</button>
+            {error && <p className="register-error">{error}</p>}
         </form>
-    );
+    </div>
+  );
 }
