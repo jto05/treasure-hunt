@@ -1,0 +1,24 @@
+* { box-sizing: border-box; }
+
+:root {
+  --bg: #101b4b;
+  --card: #545e85;
+  --text: #e7e7e7; 
+  --accent: #9e1946;
+  --font-heading: "Darumadrop One", sans-serif;
+  --font-body: system-ui, sans-serif;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-heading);
+}
+
+h1, h2 { 
+    font-family: var--(font-headig);
+    font-weight: 400;
+    font-style: normal;
+}

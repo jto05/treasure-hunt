@@ -1,0 +1,54 @@
+@import url('https://fonts.googleapis.com/css2?family=Darumadrop+One&display=swap" rel="stylesheet"');
+
+.register {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;      
+    justify-content: center;
+    padding: 1rem;
+    font-family: "Darumadrop One", sans-serif;
+}
+
+.register-card{
+    width: 100%;
+    max-width: 20rem;         
+    background: var(--card);
+    padding: 0rem 2rem 2rem 2rem; /*top, right, bottom, left */
+    border-radius: 1rem; /* round corners*/
+    display: flex;
+    flex-direction: column;
+}
+
+.register-title{
+    text-align: center;
+    font-size: 240%;
+    margin-top: 1rem;
+    margin-bottom: 2rem;
+}
+
+.register-input{
+    font-family: "Darumadrop One", sans-serif;
+    border-radius: .5rem;
+    padding: 0.2rem 0.65rem; /*top and bottom, left and right*/
+}
+
+.register-button{
+    font-family: "Darumadrop One", sans-serif;
+    background: var(--accent);
+    width: 40%;
+    border-radius: .5rem;
+    padding: .5rem;
+    cursor: pointer;
+    align-self: center;
+    margin-top: 1rem;
+    margin-bottom: 0rem;
+}
+
+.register-button:active{
+    transform: scale(.90);
+    filter: brightness(.90);
+}
+.register-error{
+    color: #8C271E;
+    text-align: center;
+}

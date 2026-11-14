@@ -1,3 +1,4 @@
+import './Distances.css'
 import { useEffect, useState} from "react";
 
 // change to be on theme later
@@ -46,23 +47,31 @@ export default function Distances({onNotRegistered}){
     const { team, progress, node, distance } = state;
 
     if (node === null) {
-        return <h2>{team}, you finished the hunt! 🏆</h2>;
+        return(
+        <div className="endScreen">
+            <form className="endScreen-card">
+                <h2 className="endScreen-text">{team}, you finished the treasure hunt!</h2>
+            </form>
+        </div>
+        )
     }
 
     // display
     return (
-        <div>
-            <h2>Team {team}</h2>
-            <p>Node {progress.step + 1} of {progress.total}</p>
-            <p>
-                <strong>Head to node {node}:</strong>{" "}
-                {distance.status === "ok"
-                    ? `${LABELS[distance.level]} (~${distance.meters} m)`
-                    : "No signal"}
-            </p>
-            {distance.in_range && (
-                <button onClick={handleAdvance}>At Node! Next node</button>
-            )}
+        <div className="distances">
+            <form className="distances-card">
+                <h2 className="distances-title">Team {team}</h2>
+                <p className="distances-key">Node {progress.step + 1} of {progress.total}</p>
+                <p className="distances-progress">
+                    <strong>Head to node {node}:</strong>{" "}
+                    {distance.status === "ok"
+                        ? `${LABELS[distance.level]} (~${distance.meters} m)`
+                        : "No signal"}
+                </p>
+                {distance.in_range && (
+                    <button className="advance-button" onClick={handleAdvance}>I'm here!</button>
+                )}
+            </form>
         </div>
     );
 }
