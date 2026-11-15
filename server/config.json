@@ -5,6 +5,8 @@
     "<placeholder>"
   ],
   "challenges": {
-    "A": {"type": "trivia","question": "whats 1+1?", "answer": "2"}
+    "A": {"type": "trivia","question": "whats 1+1?", "answer": "2"},
+    "C": {"type": "memory_matrix", "rounds": 3, "start_length": 3,
+          "colors": ["red", "green", "blue", "yellow"], "show_ms": 700}
   }
 }
