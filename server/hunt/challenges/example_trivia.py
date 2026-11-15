@@ -13,9 +13,9 @@ class Trivia(Challenge):
 
     http server passes that dictonary into 
     """
-    def __init__(self, config):
-        self.config = config
-        self.question = config["question"]
+    def __init__(self, config, store):
+        super.__init__(config, store)
+        self.question = self.config["question"]
 
 
     """

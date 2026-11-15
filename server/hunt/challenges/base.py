@@ -1,3 +1,5 @@
+from .hunt.state import GameStore
+
 class Challenge:
     """
     PARENT CLASS!!!!
@@ -6,6 +8,10 @@ class Challenge:
     
     functions below MUST be implemented
     """
+
+    def __init__(self, config: dict, store: GameStore):
+        self.config = config
+        self.store = store
 
     def start(self, token) -> dict:
         raise NotImplementedError
