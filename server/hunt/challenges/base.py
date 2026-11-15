@@ -1,4 +1,4 @@
-from .hunt.state import GameStore
+from ..state import GameStore
 
 class Challenge:
     """
