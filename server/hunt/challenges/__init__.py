@@ -7,10 +7,10 @@ CHALLENGES = {"trivia" : Trivia}
 # example json
 # {"type": "trivia", "question": "1+1?", "answer": "2"}
 #
-def build(challenge_config, store):
+def build(challenge_config, node, store):
     cfg = dict(challenge_config)
     # remove "type" from the config
     challenge_type = cfg.pop("type")
 
     # return the proper constructor for challenge type
-    return CHALLENGES[challenge_type](cfg, store)
+    return CHALLENGES[challenge_type](cfg, node, store)

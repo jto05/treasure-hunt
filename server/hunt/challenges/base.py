@@ -9,8 +9,9 @@ class Challenge:
     functions below MUST be implemented
     """
 
-    def __init__(self, config: dict, store: GameStore):
+    def __init__(self, config: dict, node, store: GameStore):
         self.config = config
+        self.node = node
         self.store = store
 
     def start(self, token) -> dict:

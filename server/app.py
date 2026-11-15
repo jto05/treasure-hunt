@@ -50,17 +50,15 @@ def create_app():
     app = Flask(__name__, static_folder=WEB_DIR, static_url_path="")
     config = load_config()
 
-    # build challenges
-    challenges = {}
-    for node, cfg in config.get("challenges", {}).items():
-        challenges[node] = build(cfg)
-        
-
     store = GameStore(treasure_macs = config["treasure_macs"])
     NODES = ["A", "B", "C"]
     progression = Progression(NODES)
 
 
+    # build challenges
+    challenges = {}
+    for node, cfg in config.get("challenges", {}).items():
+        challenges[node] = build(cfg, node, store)
     # Treasure reports the average RSSI per phone MAC address to server
     # every few seconds
     #
