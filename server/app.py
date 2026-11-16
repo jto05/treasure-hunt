@@ -50,17 +50,15 @@ def create_app():
     app = Flask(__name__, static_folder=WEB_DIR, static_url_path="")
     config = load_config()
 
-    # build challenges
-    challenges = {}
-    for node, cfg in config.get("challenges", {}).items():
-        challenges[node] = build(cfg)
-        
-
     store = GameStore(treasure_macs = config["treasure_macs"])
     NODES = ["A", "B", "C"]
     progression = Progression(NODES)
 
 
+    # build challenges
+    challenges = {}
+    for node, cfg in config.get("challenges", {}).items():
+        challenges[node] = build(cfg, node, store)
     # Treasure reports the average RSSI per phone MAC address to server
     # every few seconds
     #
@@ -187,6 +185,8 @@ def create_app():
             return jsonify({"error": "not_registered"}), 401
         if node != progression.current_node(token):
             return jsonify({"error": "wrong_node"}), 403
+        if node not in challenges:
+            return jsonify({"error": "no_challenge"}), 404
 
         # start respective challenge and return result
         return jsonify(challenges[node].start(token))
@@ -201,12 +201,19 @@ def create_app():
         if node != progression.current_node(token):
             return jsonify({"error": "wrong_node"}), 403
 
+        if node not in challenges:
+            return jsonify({"error": "no_challenge"}), 404
+
         data = request.get_json(silent=True) or {}
         result = challenges[node].submit(token, data.get("answer"))
+        if "error" in result:
+            return jsonify(result), 400
 
-        # NOTE: Automaticaly progress if it was correct is optional
-        # if result.get("correct"):
-        #     progression.complete(token, node)
+        # The challenge (not the browser) decides when it's finished:
+        # "done" means the whole challenge is complete, which is not the
+        # same as "correct" for multi-round games like memory_matrix.
+        if result.get("done"):
+            progression.complete(token, node)
         return jsonify(result)
 
     # Get leaderboard
