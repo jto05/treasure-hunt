@@ -15,6 +15,9 @@ logger = logging.getLogger(__name__)
 # can't be tuned meaningfully without live RSSI data.
 RSSI_SMOOTHING_K = 5
 
+# Hardcoded 60 second time threshold for the amount of time a team has
+# before it is automatically deregistered. KM
+TEAM_MISSING_DEREGISTER_TIME_S = 60
 
 class GameStore():
     def __init__(self, treasure_macs):
@@ -30,6 +33,9 @@ class GameStore():
         for m in treasure_macs:
             self._treasure_macs.append(m.lower())
 
+        # Empty dict to track when team was last detected. KM
+        self._last_seen = {}
+
     def register_team(self, name, mac):
         name = name.strip()
         with self._lock:
@@ -42,6 +48,11 @@ class GameStore():
                 "name": name,
                 "mac":  mac.lower() if mac else None,
             }
+
+            # Record time when team was registered. KM
+            if mac:
+                self._last_seen[mac.lower()] = time.time()
+
         return token
 
     def deregister_team(self, token):
@@ -75,6 +86,11 @@ class GameStore():
 
                 raw_rssi = data["rssi"]
                 n = data.get("n") or 0
+
+                # Update time for when team was last detected. KM
+                if n > 0:
+                    self._last_seen[mac] = now
+
                 previous = node_readings.get(mac)
                 if previous is None:
                     # first-ever reading for this mac -- nothing to blend with
@@ -88,6 +104,24 @@ class GameStore():
                     "n": data.get("n"),
                     "received_at": now,
                 }
+
+            # Arr of teams with no update in at least 60s. KM
+            expired = []
+
+            # For each team, check if 60 or more seconds have passed between
+            # this check and their last updated time. KM
+            for token, team in self._teams.items():
+                mac = team["mac"]
+
+                if(
+                    mac and now - self._last_seen.get(mac, now)
+                    >= TEAM_MISSING_DEREGISTER_TIME_S
+                ):
+                    expired.append(token)
+
+        # Deregister all teams in expired. KM
+        for token in expired:
+            self.deregister_team(token)
 
     def get_readings(self, node):
         with self._lock:
