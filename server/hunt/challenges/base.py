@@ -5,7 +5,7 @@ class Challenge:
     PARENT CLASS!!!!
 
     everybody make their challenge a child of ts
-    
+
     functions below MUST be implemented
     """
 

@@ -185,6 +185,8 @@ def create_app():
             return jsonify({"error": "not_registered"}), 401
         if node != progression.current_node(token):
             return jsonify({"error": "wrong_node"}), 403
+        if node not in challenges:
+            return jsonify({"error": "no_challenge"}), 404
 
         # start respective challenge and return result
         return jsonify(challenges[node].start(token))
@@ -199,12 +201,19 @@ def create_app():
         if node != progression.current_node(token):
             return jsonify({"error": "wrong_node"}), 403
 
+        if node not in challenges:
+            return jsonify({"error": "no_challenge"}), 404
+
         data = request.get_json(silent=True) or {}
         result = challenges[node].submit(token, data.get("answer"))
+        if "error" in result:
+            return jsonify(result), 400
 
-        # NOTE: Automaticaly progress if it was correct is optional
-        # if result.get("correct"):
-        #     progression.complete(token, node)
+        # The challenge (not the browser) decides when it's finished:
+        # "done" means the whole challenge is complete, which is not the
+        # same as "correct" for multi-round games like memory_matrix.
+        if result.get("done"):
+            progression.complete(token, node)
         return jsonify(result)
 
     # Get leaderboard

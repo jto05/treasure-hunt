@@ -1,13 +1,17 @@
 from .example_trivia import Trivia
+from .memory_matrix import MemoryMatrix
 
 
 # registry of challenges
-CHALLENGES = {"trivia" : Trivia}
+CHALLENGES = {
+    "trivia": Trivia,
+    "memory_matrix": MemoryMatrix,
+}
 
 # example json
 # {"type": "trivia", "question": "1+1?", "answer": "2"}
 #
-def build(challenge_config, node, store):
+def build(challenge_config, node=None, store=None):
     cfg = dict(challenge_config)
     # remove "type" from the config
     challenge_type = cfg.pop("type")
