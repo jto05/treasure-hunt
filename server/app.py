@@ -171,10 +171,28 @@ def create_app():
         resp.delete_cookie("team")
         return resp
 
+    # Deregister team through admin page. KM
+    @app.post("/admin/deregister")
+    def admin_deregister():
+        data = request.get_json(silent = True) or {}
+        mac = data.get("mac")
+
+        if not isinstance(mac, str):
+            return jsonify({"error": "bad_mac"}), 400
+
+        removed = store.deregister_team_mac(mac)
+
+        if not removed:
+            return jsonify({"error": "team_not_found"}), 404
+
+        logger.info("team manually deregistered mac=%s", mac)
+        return jsonify({"ok": True})
+
     # Get the description of minigame at specific node
     @app.get("/api/challenge/<node>")
     def get_challenge(node):
         return jsonify()
+
 
     # Start challenge at specific node
     @app.post("/api/challenge/<node>/start")
