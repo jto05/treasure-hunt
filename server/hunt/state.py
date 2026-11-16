@@ -70,7 +70,29 @@ class GameStore():
                 for node_readings in self._readings.values():
                     node_readings.pop(mac, None)
 
+                # Remove team from _last_seen dict. KM
+                self._last_seen.pop(mac, None)
+
             return True
+
+    # Deregister through mac addr, setup for deregister button on /admin. KM
+    def deregister_team_mac(self, mac):
+        if not mac:
+            return False
+
+        mac = mac.lower()
+
+        # Get team token belonging to mac addr. KM
+        with self._lock: # Prevent another request while the curr one runs. KM
+            token = next(
+                (token for token, team in self._teams.items()
+                 if team["mac"] == mac), None,
+            )
+
+        if token is None:
+            return False
+
+        return self.deregister_team(token)
 
     def record_report(self, node, readings, now=None):
         if now is None:
