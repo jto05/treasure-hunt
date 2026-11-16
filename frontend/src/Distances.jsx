@@ -10,7 +10,7 @@ const LABELS = {
     cold: "Cold",
 };
 
-export default function Distances({onNotRegistered}){
+export default function Distances({onNotRegistered, onStartChallenge}){
     const [state, setState] = useState(null);
 
     useEffect(() => {
@@ -69,7 +69,7 @@ export default function Distances({onNotRegistered}){
                         : "No signal"}
                 </p>
                 {distance.in_range && (
-                    <button className="advance-button" onClick={handleAdvance}>I'm here!</button>
+                    <button className="advance-button" onClick={onStartChallenge}>I'm here!</button>
                 )}
             </form>
         </div>
