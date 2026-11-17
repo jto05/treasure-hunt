@@ -1,7 +1,7 @@
 //challenges.jsx
 import { useEffect, useState } from "react";
 import Trivia from "./Trivia.jsx";
-import MemoryMatrix from "./games/MemoryMatrix";
+import MemoryMatrix from "./MemoryMatrix.jsx";
 
 const GAMES = {
     trivia: Trivia,

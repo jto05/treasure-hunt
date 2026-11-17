@@ -1,0 +1,19 @@
+@import url('https://fonts.googleapis.com/css2?family=Darumadrop+One&display=swap" rel="stylesheet"');
+
+.matrix-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.matrix-tile {
+    width: 25%;
+    aspect-ratio: 1;
+    border: none;
+    border-radius: 1rem;
+    opacity: 0.35;              /* dim by default */
+    transition: opacity 0.1s, transform 0.1s;
+}
+
+.matrix-tile.lit { opacity: 1; transform: scale(1.05); }
+.matrix-tile:not(:disabled):active { opacity: 1; }
