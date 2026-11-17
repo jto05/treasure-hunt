@@ -65,7 +65,7 @@ export default function Distances({onNotRegistered, onStartChallenge}){
                 <p className="distances-progress">
                     <strong>Head to node {node}:</strong>{" "}
                     {distance.status === "ok"
-                        ? `${LABELS[distance.level]} (~${distance.meters} m)`
+                        ? `${LABELS[distance.level]}`
                         : "No signal"}
                 </p>
                 {distance.in_range && (

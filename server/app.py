@@ -138,24 +138,24 @@ def create_app():
         return resp
 
     # advance from completeing one node to the next
-    @app.post("/api/advance")
-    def advance():
-        token = request.cookies.get("team")
-        team = store.get_team(token)
-        if team is None:
-            return jsonify({"error": "not_registered"}), 401
+    # @app.post("/api/advance")
+    # def advance():
+    #     token = request.cookies.get("team")
+    #     team = store.get_team(token)
+    #     if team is None:
+    #         return jsonify({"error": "not_registered"}), 401
 
-        node = progression.current_node(token)
-        if node is None:
-            return jsonify({"error": "finished"}), 400
+    #     node = progression.current_node(token)
+    #     if node is None:
+    #         return jsonify({"error": "finished"}), 400
 
-        #get reading from server, not browser!! users cant be trusted
-        reading = store.get_readings(node).get(team["mac"])
-        if not describe(reading).get("in_range"):
-            return jsonify({"error": "too_far"}), 403
+    #     #get reading from server, not browser!! users cant be trusted
+    #     reading = store.get_readings(node).get(team["mac"])
+    #     if not describe(reading).get("in_range"):
+    #         return jsonify({"error": "too_far"}), 403
         
-        progression.complete(token, node)
-        return jsonify({"ok": True})
+    #     progression.complete(token, node)
+    #     return jsonify({"ok": True})
 
     # Deregister a team
     @app.delete("/api/team")

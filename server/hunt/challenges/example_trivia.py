@@ -34,4 +34,4 @@ class Trivia(Challenge):
     def submit(self, token, answer) -> dict:
         # return as a dict b/c everything routed through http server is JSON
         correct = self.config["answer"] == answer
-        return {"correct": correct}
+        return {"correct": correct, "done": correct}

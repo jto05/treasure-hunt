@@ -33,8 +33,8 @@ export default function Challenges({ onDone, onNotRegistered }) {
         });
         if (res.status === 401) return onNotRegistered?.();
         const data = await res.json();
-        if (data.correct) onDone?.();
-        else setFeedback("wrong answer");
+        if (data.done) onDone?.();
+        else if (data.correct === false) setFeedback("wrong answer");
         setAnswer("");
     }
 
