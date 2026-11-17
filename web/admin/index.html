@@ -25,14 +25,47 @@ function render(data) {
     html += "</table>";
   }
 
-  html += "<h2>Teams</h2><table border=1><tr><th>Name</th><th>MAC</th></tr>";
+  // Changed Teams table to add deregister button. KM
+  html += "<h2>Teams</h2><table border=1>";
+  html += "<tr><th>Name</th><th>MAC</th><th>Action</th></tr>";
+  
   for (const t of data.teams) {
-    html += "<tr><td>" + t.name + "</td><td>" + (t.mac || "(unresolved)") + "</td></tr>";
+    html += "<tr><td>" + t.name + "</td><td>" + (t.mac || "(unresolved)") + "</td>";
+
+    if (t.mac){
+      html += "<td><button onclick=\"deregisterTeam('" + t.mac + "')\">Deregister</button></td>";
+    } else {
+      html += "<td></td>";
+    }
+
+    html += "</tr>"
   }
+
   html += "</table>";
 
   document.getElementById("out").innerHTML = html;
 }
+
+// Function called when button pressed to deregister team. KM
+async function deregisterTeam(mac){
+    if (!confirm("Deregister this team?")){
+      return;
+    }
+
+    const res = await fetch("/admin/deregister", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({mac: mac})
+    });
+
+  if (!res.ok){
+    alert("Unable to deregister team.");
+    return;
+  }
+
+  await poll();
+
+}
+  
 
 poll();
 setInterval(poll, 1500);
