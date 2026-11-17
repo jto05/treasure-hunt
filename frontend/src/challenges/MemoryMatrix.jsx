@@ -6,7 +6,8 @@ export default function MemoryMatrix({challenge, node, onDone, onNotRegistered})
     const [phase, setPhase] = useState("showing"); //three phases: showing, input, checking
     const [lit, setLit] = useState(null); //color glowing
     const [taps, setTaps] = useState([]); //user input
-    const [feedback, setFeedback] = useState("");
+    const [feedback, setFeedback] = useState(" ");
+    const START_DELAY = 1500; 
 
     //user effect plays the sequence
     useEffect(() => {
@@ -14,7 +15,6 @@ export default function MemoryMatrix({challenge, node, onDone, onNotRegistered})
         setPhase("showing");
         setTaps([]);
         setLit(null);
-        setFeedback("");
 
         //flash time and short wait
         //goes through each color in the squence and flashes the appropriate color
@@ -26,7 +26,10 @@ export default function MemoryMatrix({challenge, node, onDone, onNotRegistered})
         });
         
         //once sequence plays, we switch to input mode
-        timers.push(setTimeout(() => setPhase("input"), 500 + view.sequence.length * step));
+        timers.push(setTimeout(() => {
+            setPhase("input");
+            setFeedback(" ");
+         }, START_DELAY + view.sequence.length * step));
 
         return () => timers.forEach(clearTimeout);
     }, [view]);
@@ -84,7 +87,7 @@ export default function MemoryMatrix({challenge, node, onDone, onNotRegistered})
                 />
                 ))}
             </div>
-            {feedback && <p className = "challenge-feedback">{feedback}</p>}
+            {<p className = "challenge-feedback">{feedback}</p>}
             </div>
         </div>
     );
