@@ -7,6 +7,6 @@
   "challenges": {
     "A": {"type": "trivia","question": "whats 1+1?", "answer": "2"},
     "B": {"type": "trivia","question": "whats 1+2?", "answer": "3"},
-    "C": {"type": "trivia","question": "whats 2+2?", "answer": "4"}
+    "C": {"type": "memory_matrix", "rounds": 3, "start_length": 3, "colors": ["red", "green", "blue", "yellow"], "show_ms": 700}
   }
 }

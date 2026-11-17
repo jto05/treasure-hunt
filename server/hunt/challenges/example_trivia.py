@@ -28,7 +28,7 @@ class Trivia(Challenge):
     
     def start(self, token) -> dict:
         # pls return as a dictionary
-        return {"question": self.config["question"]}
+        return {"type": "trivia", "question": self.config["question"]}
 
     # returns if that answer was correct
     def submit(self, token, answer) -> dict:

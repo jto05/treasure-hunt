@@ -2,7 +2,7 @@ import './App.css'
 import { useEffect, useState} from "react";
 import RegisterForm from "./RegisterForm";
 import Distances from "./Distances";
-import Challenges from "./Challenges";
+import Challenges from "./challenges/Challenges";
 
 /**
  * This file determines on the frontend, which screen should load for the player
