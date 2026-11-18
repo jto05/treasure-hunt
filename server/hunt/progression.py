@@ -69,4 +69,5 @@ class Progression:
 
         rows.sort(key = lambda r: (-r[1], r[3] or r[2]))
         return rows
+
                            

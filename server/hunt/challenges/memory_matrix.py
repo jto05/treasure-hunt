@@ -71,6 +71,7 @@ class MemoryMatrix(Challenge):
         # what the phone gets back; never includes anything it shouldn't
         # need beyond the sequence it has to display
         view = {
+            "type": "memory_matrix",
             "round": t["round"],
             "rounds": self.rounds,
             "done": t["done"],

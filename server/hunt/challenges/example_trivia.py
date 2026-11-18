@@ -28,10 +28,10 @@ class Trivia(Challenge):
     
     def start(self, token) -> dict:
         # pls return as a dictionary
-        return {"question": self.config["question"]}
+        return {"type": "trivia", "question": self.config["question"]}
 
     # returns if that answer was correct
     def submit(self, token, answer) -> dict:
         # return as a dict b/c everything routed through http server is JSON
         correct = self.config["answer"] == answer
-        return {"correct": correct}
+        return {"correct": correct, "done": correct}
