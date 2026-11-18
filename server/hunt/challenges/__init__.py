@@ -1,11 +1,13 @@
 from .example_trivia import Trivia
 from .memory_matrix import MemoryMatrix
+from .dist_threshold import DistThreshold
 
 
 # registry of challenges
 CHALLENGES = {
     "trivia": Trivia,
     "memory_matrix": MemoryMatrix,
+    "dist_threshold": DistThreshold
 }
 
 # example json
