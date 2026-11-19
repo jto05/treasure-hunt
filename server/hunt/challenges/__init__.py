@@ -1,11 +1,13 @@
 from .example_trivia import Trivia
 from .memory_matrix import MemoryMatrix
+from .timebank_trivia import TimebankTrivia
 
 
 # registry of challenges
 CHALLENGES = {
     "trivia": Trivia,
     "memory_matrix": MemoryMatrix,
+    "timebank_trivia": TimebankTrivia,
 }
 
 # example json
