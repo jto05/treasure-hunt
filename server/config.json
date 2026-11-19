@@ -5,7 +5,22 @@
     "<placeholder>"
   ],
   "challenges": {
-    "A": {"type": "trivia","question": "whats 1+1?", "answer": "2"},
+    "A": {
+      "type": "time_bank_trivia",
+      "initial_time_s": 10,
+      "bonus_s": 5,
+      "required_correct": 5,
+      "questions": [
+        {"question": "Which media access protocol does classic Ethernet use?", "choices": ["CSMA/CA", "CSMA/CD", "Token passing", "Synchronous TDM"], "answer": "CSMA/CD"},
+        {"question": "In the OSI model, the unit of data at the Data Link layer is called a...", "choices": ["Packet", "Message", "Frame", "Segment"], "answer": "frame"},
+        {"question": "Which 802.11 interframe space has the HIGHEST priority?", "choices": ["DIFS", "PIFS", "SIFS"], "answer": "SIFS"},
+        {"question": "192.168.1.10 is in which IP address class?", "choices": ["Class A", "Class B", "Class C", "Class D"], "answer": "Class C"},
+        {"question": "How big is an ATM cell (in bytes)?", "choices": ["48", "53", "64", "1500"], "answer": "53"},
+        {"question": "What's the flag bit pattern used by HDLC and PPP?", "choices": ["11111111", "01111110", "10101010", "01111111"], "answer": "01111110"},
+        {"question": "Link-state routing computes shortest paths using which algorithm?", "choices": ["Bellman-Ford", "Spanning tree", "Dijkstra", "Split horizon"], "answer": "dijkstra"},
+        {"question": "SOCK_DGRAM is the socket type for which protocol?", "choices": ["TCP", "UDP", "Raw link-layer", "Unix pipes"], "answer": "UDP"}
+      ]
+    },
     "C": {"type": "memory_matrix", "rounds": 3, "start_length": 3, "colors": ["red", "green", "blue", "yellow"], "show_ms": 700}
   }
 }
