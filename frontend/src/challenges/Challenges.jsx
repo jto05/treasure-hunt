@@ -2,10 +2,12 @@
 import { useEffect, useState } from "react";
 import Trivia from "./Trivia.jsx";
 import MemoryMatrix from "./MemoryMatrix.jsx";
+import TimebankTrivia from "./TimebankTrivia.jsx";
 
 const GAMES = {
     trivia: Trivia,
     memory_matrix: MemoryMatrix,
+    timebank_trivia: TimebankTrivia,
 };
 
 export default function Challenges({ onDone, onNotRegistered }) {
