@@ -77,22 +77,24 @@ class GameStore():
 
     # Deregister through mac addr, setup for deregister button on /admin. KM
     def deregister_team_mac(self, mac):
-        if not mac:
-            return False
-
-        mac = mac.lower()
-
-        # Get team token belonging to mac addr. KM
-        with self._lock: # Prevent another request while the curr one runs. KM
-            token = next(
-                (token for token, team in self._teams.items()
-                 if team["mac"] == mac), None,
-            )
-
+        token = self.get_token_by_mac(mac)
         if token is None:
             return False
 
         return self.deregister_team(token)
+
+    # Look up a team's token by mac -- the admin page only ever has the mac
+    # on hand (the token is the team's session cookie, never shown there).
+    def get_token_by_mac(self, mac):
+        if not mac:
+            return None
+
+        mac = mac.lower()
+        with self._lock:
+            return next(
+                (token for token, team in self._teams.items()
+                 if team["mac"] == mac), None,
+            )
 
     def record_report(self, node, readings, now=None):
         if now is None:
