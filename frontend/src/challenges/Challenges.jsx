@@ -2,10 +2,12 @@
 import { useEffect, useState } from "react";
 import Trivia from "./Trivia.jsx";
 import MemoryMatrix from "./MemoryMatrix.jsx";
+import DistThreshold from "./DistThreshold.jsx";
 
 const GAMES = {
     trivia: Trivia,
     memory_matrix: MemoryMatrix,
+    dist_threshold: DistThreshold,
 };
 
 export default function Challenges({ onDone, onNotRegistered }) {

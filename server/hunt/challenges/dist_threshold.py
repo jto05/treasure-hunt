@@ -107,7 +107,7 @@ class DistThreshold(Challenge):
         deadline = t["started_at"] + self.time_limit
 
         # Team reached threshold before time expired.
-        if (met and reading is not None and t["started_at"] < reading["received_at"] <= deadline):
+        if met and now <= deadline:
             t["state"] = "reached"
             return
 
@@ -166,7 +166,7 @@ class DistThreshold(Challenge):
     def _start_round(self, t, now):
         if t["round"] == 1:
             direction = "over"
-        if t["round"] == 2:
+        elif t["round"] == 2:
             direction = "under"
         else:
             direction = "over"
