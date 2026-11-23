@@ -115,7 +115,12 @@ class TimebankTrivia(Challenge):
 
     # builds the status dict returned on every start/submit call
     def _view(self, team):
-        view = {"status": team["status"],
+        # "type" lets the frontend pick the right widget (same convention
+        # MemoryMatrix uses); "done" is always a bool, not just present-when-true,
+        # so the frontend can check it unconditionally without a missing-key check
+        view = {"type": "timebank_trivia",
+                "status": team["status"],
+                "done": team["status"] == "done",
                 "correct_count": team["correct_count"],
                 "required_correct": self.required_correct}
 
@@ -130,8 +135,6 @@ class TimebankTrivia(Challenge):
                 view["choices"] = choices
             # time_left_s applies to every active question, not just MC ones
             view["time_left_s"] = max(0.0, team["deadline"] - self._now())
-        elif team["status"] == "done":
-            view["done"] = True
         elif team["status"] == "failed":
             view["failed"] = True
         return view
