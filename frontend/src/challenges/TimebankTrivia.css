@@ -35,3 +35,21 @@
     opacity: 0.6;
     cursor: default;
 }
+
+@keyframes timebank-flash {
+    0%   { filter: brightness(1); }
+    35%  { filter: brightness(1.35); }
+    100% { filter: brightness(1); }
+}
+
+.timebank-flash-correct {
+    background: #2ecc71 !important;
+    opacity: 1 !important;
+    animation: timebank-flash 0.45s ease;
+}
+
+.timebank-flash-wrong {
+    background: #e74c3c !important;
+    opacity: 1 !important;
+    animation: timebank-flash 0.45s ease;
+}
