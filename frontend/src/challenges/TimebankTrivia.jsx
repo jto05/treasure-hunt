@@ -7,6 +7,9 @@ export default function TimebankTrivia({ challenge, node, onDone, onNotRegistere
     const [answer, setAnswer] = useState("");
     const [timeLeft, setTimeLeft] = useState(challenge.time_left_s ?? 0);
     const [busy, setBusy] = useState(false);
+    const [feedback, setFeedback] = useState(null); // null | "correct" | "wrong"
+    const [flashedChoice, setFlashedChoice] = useState(null); // which choice text was tapped
+
     // client-side anchor for the countdown display -- re-set every time the
     // server gives us a fresh authoritative time_left_s
     const deadlineRef = useRef(Date.now() + (challenge.time_left_s ?? 0) * 1000);
@@ -19,13 +22,33 @@ export default function TimebankTrivia({ challenge, node, onDone, onNotRegistere
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ answer: value }),
         });
-        setBusy(false);
         if (res.status === 401) return onNotRegistered?.();
         const data = await res.json();
-        if (data.error) return; // transient/bad request -- leave the current view up
+        if (data.error) {
+            setBusy(false);
+            return; // transient/bad request -- leave the current view up
+        }
         setAnswer("");
-        setView(data);
-        if (data.done) onDone?.();
+
+        // the countdown's auto-submit has no real tap to attribute this to --
+        // apply immediately, no flash
+        if (value === null) {
+            setView(data);
+            setBusy(false);
+            if (data.done) onDone?.();
+            return;
+        }
+
+        // flash the tapped button red/green, then advance after a beat
+        setFeedback(data.correct ? "correct" : "wrong");
+        setFlashedChoice(value);
+        setTimeout(() => {
+            setView(data);
+            setFeedback(null);
+            setFlashedChoice(null);
+            setBusy(false);
+            if (data.done) onDone?.();
+        }, 450);
     }
 
     // reset the countdown anchor whenever a new authoritative view arrives
@@ -88,7 +111,10 @@ export default function TimebankTrivia({ challenge, node, onDone, onNotRegistere
                             <button
                                 key={choice}
                                 type="button"
-                                className="timebank-choice"
+                                className={
+                                    "timebank-choice" +
+                                    (flashedChoice === choice ? ` timebank-flash-${feedback}` : "")
+                                }
                                 disabled={busy}
                                 onClick={() => submitAnswer(choice)}
                             >
@@ -105,7 +131,11 @@ export default function TimebankTrivia({ challenge, node, onDone, onNotRegistere
                             placeholder="Your answer"
                             disabled={busy}
                         />
-                        <button className="challenge-button" type="submit" disabled={busy}>
+                        <button
+                            className={"challenge-button" + (feedback ? ` timebank-flash-${feedback}` : "")}
+                            type="submit"
+                            disabled={busy}
+                        >
                             Submit
                         </button>
                     </form>

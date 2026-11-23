@@ -188,6 +188,33 @@ def create_app():
         logger.info("team manually deregistered mac=%s", mac)
         return jsonify({"ok": True})
 
+    # Reset a team's in-progress state for one node's challenge, e.g. to
+    # give a stuck team a clean restart without touching their overall
+    # progression (which node they're on, how far they've gotten).
+    @app.post("/admin/<node>/reset")
+    def admin_reset_challenge(node):
+        data = request.get_json(silent=True) or {}
+        mac = data.get("mac")
+
+        if not isinstance(mac, str):
+            return jsonify({"error": "bad_request"}), 400
+
+        token = store.get_token_by_mac(mac)
+        if token is None:
+            return jsonify({"error": "team_not_found"}), 404
+
+        challenge = challenges.get(node)
+        if challenge is None:
+            return jsonify({"error": "no_challenge"}), 404
+
+        reset = getattr(challenge, "reset", None)
+        if reset is None:
+            return jsonify({"error": "not_supported"}), 400
+
+        reset(token)
+        logger.info("admin reset challenge mac=%s node=%s", mac, node)
+        return jsonify({"ok": True})
+
     # Get the description of minigame at specific node
     @app.get("/api/challenge/<node>")
     def get_challenge(node):
@@ -261,7 +288,9 @@ def create_app():
     def admin_status():
         return jsonify({
             "nodes": store.all_readings(),
-            "teams": store.teams()
+            "teams": store.teams(),
+            # only nodes with a configured challenge support /admin/<node>/reset
+            "challenge_nodes": sorted(challenges.keys()),
         })
 
     @app.get("/admin")
