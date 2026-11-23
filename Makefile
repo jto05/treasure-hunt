@@ -17,7 +17,7 @@ install: ## Install frontend dependencies (npm install) -- server deps are handl
 
 run: install ## Run the Flask server and the Vite dev server together (Ctrl+C stops both)
 	@( cd $(SERVER_DIR) && make run ) & server_pid=$$!; \
-	( cd $(FRONTEND_DIR) && npm run dev ) & frontend_pid=$$!; \
+	( cd $(FRONTEND_DIR) && npm run dev -- --host) & frontend_pid=$$!; \
 	trap 'kill $$server_pid $$frontend_pid 2>/dev/null' EXIT INT TERM; \
 	wait
 
