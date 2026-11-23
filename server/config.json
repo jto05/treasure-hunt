@@ -6,7 +6,7 @@
   ],
   "challenges": {
     "A": {
-      "type": "time_bank_trivia",
+      "type": "timebank_trivia",
       "initial_time_s": 10,
       "bonus_s": 5,
       "required_correct": 5,
