@@ -139,6 +139,19 @@ class TimebankTrivia(Challenge):
             view["failed"] = True
         return view
 
+    def _status_message(self, team, correct=None):
+        # human-readable feedback for the frontend -- "message" is always
+        # a string, never null/absent, since it's just display copy
+        if team["status"] == "done":
+            return "Nice work -- you answered enough questions correctly!"
+        if team["status"] == "failed":
+            return "Time's up -- out of time."
+        if correct is True:
+            return f"Correct! +{self.bonus_s:g}s added to the clock."
+        if correct is False:
+            return "Not quite -- next question."
+        return "Answer before the timer runs out."
+
     # ---- Challenge interface ------------------------------------------
 
     def start(self, token) -> dict:
@@ -151,9 +164,18 @@ class TimebankTrivia(Challenge):
                 # idempotent: re-calling start (e.g. page refresh) never
                 # regenerates state, it just re-checks the clock
                 self._expire_if_needed(token, team)
-            return self._view(team)
+            return {"message": self._status_message(team), **self._view(team)}
 
     def submit(self, token, answer) -> dict:
+        """
+        answer: a plain string. Free-text questions expect the team's
+        typed text; multiple-choice questions (ones whose view included a
+        "choices" list) expect the EXACT text of the option the team
+        selected -- never an index, never a list. None is also accepted
+        (graded as incorrect if still active) so the frontend can force a
+        status check once its local countdown hits zero without having a
+        real guess to send.
+        """
         # reject malformed answers before touching any state
         if not isinstance(answer, (str, type(None))):
             return {"error": "bad_answer"}
@@ -169,6 +191,7 @@ class TimebankTrivia(Challenge):
             if team["status"] != "active":
                 # terminal state (done or failed) -- resubmitting changes nothing
                 return {"correct": team["status"] == "done",
+                        "message": self._status_message(team),
                         **self._view(team)}
 
             correct = (isinstance(answer, str) and
@@ -179,11 +202,15 @@ class TimebankTrivia(Challenge):
                 team["deadline"] += self.bonus_s
                 if team["correct_count"] >= self.required_correct:
                     team["status"] = "done"
-                    return {"correct": True, **self._view(team)}
+                    return {"correct": True,
+                            "message": self._status_message(team),
+                            **self._view(team)}
             # wrong OR correct-but-not-done yet: advance to the next
             # question either way -- no retrying the same one
             self._draw_next(team)
-            return {"correct": correct, **self._view(team)}
+            return {"correct": correct,
+                    "message": self._status_message(team, correct=correct),
+                    **self._view(team)}
 
     # optional extras -- not part of base.Challenge, handy for admin/tests
 
