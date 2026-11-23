@@ -27,15 +27,16 @@ function render(data) {
 
   // Changed Teams table to add deregister button. KM
   html += "<h2>Teams</h2><table border=1>";
-  html += "<tr><th>Name</th><th>MAC</th><th>Action</th></tr>";
-  
+  html += "<tr><th>Name</th><th>MAC</th><th>Action</th><th>Reset node</th></tr>";
+
   for (const t of data.teams) {
     html += "<tr><td>" + t.name + "</td><td>" + (t.mac || "(unresolved)") + "</td>";
 
     if (t.mac){
       html += "<td><button onclick=\"deregisterTeam('" + t.mac + "')\">Deregister</button></td>";
+      html += "<td>" + resetControls(t.mac, data.challenge_nodes) + "</td>";
     } else {
-      html += "<td></td>";
+      html += "<td></td><td></td>";
     }
 
     html += "</tr>"
@@ -44,6 +45,42 @@ function render(data) {
   html += "</table>";
 
   document.getElementById("out").innerHTML = html;
+}
+
+// Builds the node dropdown + Reset button for one team's row.
+function resetControls(mac, nodes){
+  if (!nodes || nodes.length === 0) return "(no challenges)";
+
+  const selectId = "reset-node-" + mac.replace(/:/g, "");
+  let html = "<select id='" + selectId + "'>";
+  for (const node of nodes) {
+    html += "<option value='" + node + "'>" + node + "</option>";
+  }
+  html += "</select> ";
+  html += "<button onclick=\"resetChallenge('" + mac + "', '" + selectId + "')\">Reset</button>";
+  return html;
+}
+
+// Resets one node's challenge state for one team -- doesn't touch which
+// node they're on, just gives that challenge a clean restart.
+async function resetChallenge(mac, selectId){
+  const node = document.getElementById(selectId).value;
+  if (!confirm("Reset node " + node + " for this team?")){
+    return;
+  }
+
+  const res = await fetch("/admin/" + node + "/reset", {
+    method: "POST", headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({mac: mac})
+  });
+
+  if (!res.ok){
+    const data = await res.json().catch(() => ({}));
+    alert("Unable to reset: " + (data.error || res.status));
+    return;
+  }
+
+  await poll();
 }
 
 // Function called when button pressed to deregister team. KM

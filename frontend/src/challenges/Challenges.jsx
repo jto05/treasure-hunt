@@ -3,11 +3,13 @@ import { useEffect, useState } from "react";
 import Trivia from "./Trivia.jsx";
 import MemoryMatrix from "./MemoryMatrix.jsx";
 import DistThreshold from "./DistThreshold.jsx";
+import TimebankTrivia from "./TimebankTrivia.jsx";
 
 const GAMES = {
     trivia: Trivia,
     memory_matrix: MemoryMatrix,
     dist_threshold: DistThreshold,
+    timebank_trivia: TimebankTrivia,
 };
 
 export default function Challenges({ onDone, onNotRegistered }) {

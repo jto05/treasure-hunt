@@ -1,0 +1,55 @@
+.timebank-bar {
+    display: flex;
+    justify-content: space-between;
+    font-family: "Darumadrop One", sans-serif;
+    font-size: 90%;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.timebank-time {
+    font-weight: bold;
+}
+
+.timebank-choices {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.timebank-choice {
+    font-family: "Darumadrop One", sans-serif;
+    background: var(--accent);
+    border: none;
+    border-radius: .5rem;
+    padding: .5rem;
+    cursor: pointer;
+}
+
+.timebank-choice:active {
+    transform: scale(.96);
+    filter: brightness(.90);
+}
+
+.timebank-choice:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+
+@keyframes timebank-flash {
+    0%   { filter: brightness(1); }
+    35%  { filter: brightness(1.35); }
+    100% { filter: brightness(1); }
+}
+
+.timebank-flash-correct {
+    background: #2ecc71 !important;
+    opacity: 1 !important;
+    animation: timebank-flash 0.45s ease;
+}
+
+.timebank-flash-wrong {
+    background: #e74c3c !important;
+    opacity: 1 !important;
+    animation: timebank-flash 0.45s ease;
+}
