@@ -70,9 +70,9 @@ export default function DistThreshold({challenge, node, onDone, onNotRegistered}
                 ) : (
                     <>
                         <p>
-                            {view.instruction} Target: {view.direction === "over" ? "above" : "below"} {view.threshold} dBm. Hurry up!
+                            {view.instruction} Get a {view.direction === "over" ? "weaker" : "stronger"} signal of {view.threshold} dBm.
                         </p>
-                        <p>{view.signal === "ok" ? `Signal: ${view.rssi} dBm` : "No signal"}</p>
+                        <p>{view.signal === "ok" ? `Current signal: ${view.rssi} dBm` : "No signal"}</p>
                         {view.state === "running" && (
                             <p className="challenge-timer">{Math.ceil(view.remaining)}s</p>
                         )}

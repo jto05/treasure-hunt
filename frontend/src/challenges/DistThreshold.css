@@ -1,0 +1,65 @@
+@import url("https://fonts.googleapis.com/css2?family=Darumadrop+One&display=swap");
+
+.challenge {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    font-family: "Darumadrop One", sans-serif;
+}
+
+.challenge-card {
+    width: 100%;
+    max-width: 20rem;
+    background: var(--card);
+    padding: 0rem 2rem 2rem 2rem;
+    border-radius: 1rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.challenge-question {
+    text-align: center;
+    font-size: 150%;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.challenge-card p {
+    text-align: center;
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.challenge-timer {
+    text-align: center;
+    font-size: 300%;
+    margin-top: 0;
+    margin-bottom: 1rem;
+}
+
+.challenge-button {
+    font-family: "Darumadrop One", sans-serif;
+    background: var(--accent);
+    width: 50%;
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+    cursor: pointer;
+    align-self: center;
+    margin-top: 1rem;
+    margin-bottom: 0;
+}
+
+.challenge-button:active {
+    transform: scale(0.9);
+    filter: brightness(0.9);
+}
+
+.challenge-feedback {
+    text-align: center;
+    min-height: 1.5rem;
+    margin-top: 1rem;
+    margin-bottom: 0;
+}
