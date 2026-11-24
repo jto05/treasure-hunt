@@ -76,5 +76,23 @@
 
 .endScreen-text{
     text-align: center;
-    font-size : 200%;
+    margin-top: 0;
+    font-size : 120%;
+}
+
+.leave-button{
+    font-family: "Darumadrop One", sans-serif;
+    background: var(--accent);
+    width: 40%;
+    border-radius: .5rem;
+    padding: .5rem;
+    cursor: pointer;
+    align-self: center;
+    margin-top: 0rem;
+    margin-bottom: 0rem;
+}
+
+.leave-button:active{
+    transform: scale(.90);
+    filter: brightness(.90);
 }
