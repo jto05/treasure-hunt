@@ -131,10 +131,7 @@ class DistThreshold(Challenge):
             "can_press": state == "reached",
             "direction": t["direction"],
             "threshold": t["threshold"],
-            "instruction": (
-                "Get closer!" if t["direction"] == "over"
-                else "Run away!"
-            ),
+            "instruction": ("Time to run!"),
             "signal": signal["signal"],
             "rssi": (round(signal["rssi"], 1) if signal["rssi"] is not None else None)
         }

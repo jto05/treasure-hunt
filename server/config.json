@@ -21,6 +21,7 @@
         {"question": "SOCK_DGRAM is the socket type for which protocol?", "choices": ["TCP", "UDP", "Raw link-layer", "Unix pipes"], "answer": "UDP"}
       ]
     },
+    "B": {"type": "dist_threshold", "rounds": 3, "min_rssi": -100, "max_rssi": -25, "time_limit": 10, "penalty": 5},
     "C": {"type": "memory_matrix", "rounds": 3, "start_length": 3, "colors": ["red", "green", "blue", "yellow"], "show_ms": 700}
   }
 }
