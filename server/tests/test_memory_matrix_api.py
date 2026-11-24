@@ -76,8 +76,25 @@ def test_bad_answer_is_400(client):
     assert r.get_json() == {"error": "bad_answer"}
 
 
-def test_node_without_challenge_is_404(client):
-    c = team_on_node(client, "B")
+def test_node_without_challenge_is_404(monkeypatch):
+    # config.json now gives every node (A, B, C) a challenge, so this
+    # path has to be exercised with a config that leaves one bare.
+    monkeypatch.setenv("LEASES_PATH", os.path.join(SERVER_DIR, "tests", "fake.leases"))
+    monkeypatch.chdir(SERVER_DIR)
+    import app as app_module
+
+    real_load_config = app_module.load_config
+
+    def config_without_node_b():
+        cfg = real_load_config()
+        cfg["challenges"].pop("B", None)
+        return cfg
+
+    monkeypatch.setattr(app_module, "load_config", config_without_node_b)
+    app = app_module.create_app()
+    app.testing = True
+
+    c = team_on_node(app, "B")
     assert c.post("/api/challenge/B/start").status_code == 404
 
 
