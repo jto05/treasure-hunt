@@ -1,0 +1,26 @@
+.leaderboard{
+    margin-top: 1rem; 
+}
+
+.leaderboard-title{ 
+    margin: 0 0 0.5rem; 
+    text-align: center; 
+    font-size: 150%;
+}
+
+.leaderboard-list{ 
+    margin: 0; 
+    padding-left: 0; 
+}
+
+.leaderboard-row{
+  display: flex;
+  justify-content: space-between;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.leaderboard-row.mine{ 
+    font-weight: bold; 
+    text-align: center;
+}

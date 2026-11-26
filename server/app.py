@@ -265,7 +265,7 @@ def create_app():
     @app.get("/api/leaderboard")
     def leaderboard():
         rows = []
-        for token, step, started_at, finished_at in progression.leaderboard_rows():
+        for token, step, started_at, finished_at in progression.leaderboard():
             team = store.get_team(token)
             if team is None:
                 continue

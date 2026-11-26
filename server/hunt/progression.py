@@ -53,10 +53,12 @@ class Progression:
             p = self._progress.get(token)
             if p is None:
                 return None
+            finished = p["finished_at"] is not None
             return {
                 "step" : p["step"],
                 "total" : len(p["path"]),
-                "finished" : p["finished_at"] is not None,
+                "finished" : finished,
+                "seconds": round(p["finished_at"] -p["started_at"]) if finished else None,
             }
 
     #mayb for admin view?? 

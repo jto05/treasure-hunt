@@ -1,5 +1,6 @@
 import './Distances.css'
 import { useEffect, useState} from "react";
+import Leaderboard from "./Leaderboard";
 
 // change to be on theme later
 const LABELS = {
@@ -9,6 +10,13 @@ const LABELS = {
     cool: "Cool",
     cold: "Cold",
 };
+
+//make time appear as format MM:SS
+function formatTime(seconds) {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${String(s).padStart(2, "0")}`; 
+}
 
 export default function Distances({onNotRegistered, onStartChallenge}){
     const [state, setState] = useState(null);
@@ -49,9 +57,10 @@ export default function Distances({onNotRegistered, onStartChallenge}){
     if (node === null) {
         return(
         <div className="endScreen">
-            <form className="endScreen-card">
-                <h2 className="endScreen-text">{team}, you finished the treasure hunt!</h2>
-            </form>
+            <div className="endScreen-card">
+                <h2 className="endScreen-text">{team}, you finished the treasure hunt in {formatTime(progress.seconds)}</h2>
+                <Leaderboard myTeam={team} />
+            </div>
         </div>
         )
     }
