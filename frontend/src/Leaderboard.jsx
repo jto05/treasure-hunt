@@ -23,7 +23,6 @@ export default function Leaderboard({ myTeam }) {
                 const data = await res.json();
                 if (!cancelled) setRows(data.leaderboard.filter((r) => r.finished));
             } catch (err) {
-                console.error("leaderboard failed:", err);
                 // do nothing
             }
         }
